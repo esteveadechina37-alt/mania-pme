@@ -305,7 +305,8 @@
                 <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                     <i class="fas fa-th-large"></i> Tableau de bord
                 </a>
-                <a href="#"><i class="fas fa-users"></i> Employés</a>
+                <!-- <a href=""><i class="fas fa-users"></i> Employés</a> -->
+                <a href="{{ route('admin.employees.index') }}"><i class="fas fa-users"></i> Employés</a>
                 <a href="#"><i class="fas fa-sitemap"></i> Départements</a>
             </div>
             <div class="nav-section">
