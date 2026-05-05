@@ -106,16 +106,33 @@
                 <div class="form-header">
                     <h1 id="stepTitle">Créer mon compte</h1>
                     <p id="stepSubtitle" class="subtitle">Commencez par vos informations personnelles</p>
+
+                    <!-- voir les erreurs si des champs manquent ou sont mal remplis -->
+
+                    @if($errors->any())
+    <div style="background:rgba(220,38,38,0.08); border:1px solid rgba(220,38,38,0.2); border-radius:10px; padding:14px 18px; margin-bottom:20px;">
+        <p style="font-size:13px; font-weight:700; color:#dc2626; margin-bottom:8px;">
+            <i class="fas fa-exclamation-triangle"></i> Veuillez corriger les erreurs suivantes :
+        </p>
+        <ul style="list-style:none; display:flex; flex-direction:column; gap:4px;">
+            @foreach($errors->all() as $error)
+                <li style="font-size:12.5px; color:#dc2626;">• {{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
                 </div>
 
-                <form id="registerForm" onsubmit="handleFinalSubmit(event)">
+                <!-- <form id="registerForm" onsubmit="handleFinalSubmit(event)"> -->
+                    <form id="registerForm" method="POST" action="{{ route('register') }}"> 
+                        @csrf
                     <!-- Step 1: Personal Info -->
                     <div id="step1" class="form-step active">
                         <div class="form-group">
                             <label>Nom complet <span class="required">*</span></label>
                             <div class="input-wrapper">
                                 <i class="fas fa-user input-icon"></i>
-                                <input type="text" id="full_name" name="full_name" placeholder="nom complet" required>
+                                <input type="text" id="full_name" name="name" placeholder="nom complet" required>
                                 <div class="input-border-anim"></div>
                             </div>
                         </div>
@@ -124,7 +141,7 @@
                             <label>Email personnel <span class="required">*</span></label>
                             <div class="input-wrapper">
                                 <i class="fas fa-envelope input-icon"></i>
-                                <input type="email" id="personal_email" name="personal_email" placeholder="jean@example.com" required>
+                                <input type="email" id="personal_email" name="email" placeholder="jean@example.com" required>
                                 <div class="input-border-anim"></div>
                             </div>
                         </div>
@@ -142,7 +159,7 @@
                                 <label>Confirmer <span class="required">*</span></label>
                                 <div class="input-wrapper">
                                     <i class="fas fa-lock input-icon"></i>
-                                    <input type="password" id="password_confirm" placeholder="Confirmer" required minlength="8">
+                                    <input type="password" id="password_confirm" placeholder="Confirmer" required minlength="8" name="password_confirmation">
                                     <div class="input-border-anim"></div>
                                 </div>
                             </div>
@@ -174,7 +191,7 @@
                                 <label>Secteur <span class="required">*</span></label>
                                 <div class="select-wrapper">
                                     <i class="fas fa-industry input-icon"></i>
-                                    <select id="industry" name="industry" required>
+                                    <select id="industry" name="company_sector" required>
                                         <option value="">Choisir...</option>
                                         <option value="tech">Technologie</option>
                                         <option value="retail">Commerce</option>
@@ -189,10 +206,10 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Nb employés <span class="required">*</span></label>
+                                <label>Nombre d'employés <span class="required">*</span></label>
                                 <div class="select-wrapper">
                                     <i class="fas fa-users input-icon"></i>
-                                    <select id="employees_count" name="employees_count" required>
+                                    <select id="employees_count" name="company_employees_count" required>
                                         <option value="">Sélectionner...</option>
                                         <option value="1-10">1 – 10</option>
                                         <option value="11-50">11 – 50</option>
@@ -212,7 +229,7 @@
                             <label>Téléphone <span class="required">*</span></label>
                             <div class="input-wrapper">
                                 <i class="fas fa-phone input-icon"></i>
-                                <input type="tel" id="phone" name="phone" placeholder="+229 123 456 78" required>
+                                <input type="tel" id="phone" name="company_phone" placeholder="+229 123 456 78" required>
                                 <div class="input-border-anim"></div>
                             </div>
                         </div>
@@ -222,7 +239,7 @@
                                 <label>Pays <span class="required">*</span></label>
                                 <div class="select-wrapper">
                                     <i class="fas fa-globe input-icon" id="countryFlagIcon"></i>
-                                    <select id="country" name="country" required>
+                                    <select id="country" name="company_country" required>
                                         <option value="">Choisir...</option>
                                         <option value="benin" data-flag="🇧🇯">🇧🇯 Bénin</option>
                                         <option value="senegal" data-flag="🇸🇳">🇸🇳 Sénégal</option>
@@ -241,7 +258,7 @@
                                 <label>Ville <span class="required">*</span></label>
                                 <div class="input-wrapper">
                                     <i class="fas fa-map-marker-alt input-icon"></i>
-                                    <input type="text" id="city" name="city" placeholder="Cotonou" required>
+                                    <input type="text" id="city" name="company_city" placeholder="Cotonou" required>
                                     <div class="input-border-anim"></div>
                                 </div>
                             </div>
@@ -251,7 +268,7 @@
                             <label>Adresse complète</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-map-pin input-icon"></i>
-                                <input type="text" id="address" name="address" placeholder="123 Rue de la Paix">
+                                <input type="text" id="address" name="company_address" placeholder="123 Rue de la Paix">
                                 <div class="input-border-anim"></div>
                             </div>
                         </div>
