@@ -11,14 +11,37 @@ use Illuminate\Support\Facades\Hash;
 
 class EmployeeController extends Controller
 {
+    // public function index()
+    // {
+    //     $companyId = auth()->user()->company_id;
+    //     $employees = Employee::where('company_id', $companyId)
+    //                   ->with('user', 'department')
+    //                   ->paginate(15);
+    //     return view('admin.employees.index', compact('employees'));
+    // }
     public function index()
-    {
-        $companyId = auth()->user()->company_id;
-        $employees = Employee::where('company_id', $companyId)
-                      ->with('user', 'department')
-                      ->paginate(15);
-        return view('admin.employees.index', compact('employees'));
-    }
+        {
+            $companyId = auth()->user()->company_id;
+
+            // Liste des employés paginée
+            $employees = Employee::where('company_id', $companyId)
+                        ->with('user', 'department')
+                        ->paginate(15);
+
+            // Statistiques dynamiques
+            $totalEmployees = $employees->total(); // nombre total d'employés (tient compte de la pagination)
+            $activeCount    = Employee::where('company_id', $companyId)->where('status', 'active')->count();
+            $onLeaveCount   = 0; // sera calculé plus tard avec la table leave_requests
+            $departmentsCount = \App\Models\Department::where('company_id', $companyId)->count();
+
+            return view('admin.employees.index', compact(
+                'employees',
+                'totalEmployees',
+                'activeCount',
+                'onLeaveCount',
+                'departmentsCount'
+            ));
+        }
 
     public function create()
     {
