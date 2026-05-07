@@ -3,6 +3,7 @@
 @section('title', 'Employés')
 
 @section('content')
+
 <style>
     /* ----- Styles communs (issus du dashboard) ----- */
     .premium-table tr:hover td {
@@ -243,10 +244,14 @@
                         </a>
                         <form action="{{ route('admin.employees.destroy', $employee) }}" method="POST" style="display:inline;">
                             @csrf @method('DELETE')
-                            <button type="submit" onclick="return confirm('Supprimer cet employé ?')" 
+                            <button type="button" onclick="openConfirmModal('{{ route('admin.employees.destroy', $employee) }}')"
                                     class="action-btn delete" style="border:none; cursor:pointer;" title="Supprimer">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
+                            <!-- <button type="submit" onclick="return confirm('Supprimer cet employé ?')" 
+                                    class="action-btn delete" style="border:none; cursor:pointer;" title="Supprimer">
+                                <i class="fas fa-trash-alt"></i>
+                            </button> -->
                         </form>
                     </div>
                 </td>
@@ -263,7 +268,9 @@
     </table>
 </div>
 
+
 <div style="margin-top:24px;">
     {{ $employees->links() }}
 </div>
+
 @endsection

@@ -144,12 +144,26 @@ class EmployeeController extends Controller
     public function destroy(Employee $employee)
     {
         $this->authorizeCompany($employee);
-        $user = $employee->user;
+
+        // Désactiver l'utilisateur lié (optionnel, évite qu'il se connecte)
+        $employee->user->update(['is_active' => false]);
+
+        // Soft delete de l'employé uniquement
         $employee->delete();
-        $user->delete(); // supprime aussi l'utilisateur associé
+
         return redirect()->route('admin.employees.index')
-               ->with('success', 'Employé supprimé.');
+            ->with('success', 'Employé supprimé (soft delete).');
     }
+
+    // public function destroy(Employee $employee)
+    // {
+    //     $this->authorizeCompany($employee);
+    //     $user = $employee->user;
+    //     $employee->delete();
+    //     $user->delete(); // supprime aussi l'utilisateur associé
+    //     return redirect()->route('admin.employees.index')
+    //            ->with('success', 'Employé supprimé.');
+    // }
 
     private function authorizeCompany(Employee $employee)
     {

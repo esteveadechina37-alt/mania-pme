@@ -170,9 +170,26 @@
         <form action="{{ route('admin.employees.destroy', $employee) }}" method="POST" 
               onsubmit="return confirm('Supprimer définitivement cet employé ?');" style="display:inline;">
             @csrf @method('DELETE')
-            <button type="submit" class="btn-soft danger">
+            <button type="button"
+                onclick="openConfirmModal('{{ route('admin.employees.destroy', $employee) }}')"
+                style="background: #DC2626;
+                    color: #fff;
+                    padding: 10px 22px;
+                    border-radius: 10px;
+                    border: none;
+                    font-weight: 600;
+                    font-size: 14px;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+                    transition: all 0.2s ease;">
+            <i class="fas fa-trash-alt"></i> Supprimer l'employé
+        </button>
+            <!-- <button type="submit" class="btn-soft danger">
                 <i class="fas fa-trash-alt"></i> Supprimer
-            </button>
+            </button> -->
         </form>
     </div>
 </div>

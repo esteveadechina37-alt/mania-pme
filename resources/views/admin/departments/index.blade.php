@@ -55,9 +55,13 @@
                 </a>
                 <form action="{{ route('admin.departments.destroy', $department) }}" method="POST" style="display:inline;">
                     @csrf @method('DELETE')
-                    <button type="submit" onclick="return confirm('Supprimer ce département ?')" style="width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; background:transparent; color:#dc2626; border:none; cursor:pointer; transition:0.2s;" title="Supprimer">
+                    <button type="button" onclick="openConfirmModal('{{ route('admin.departments.destroy', $department) }}')"
+                            style="width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; background:transparent; color:#dc2626; border:none; cursor:pointer; transition:0.2s;" title="Supprimer">
                         <i class="fas fa-trash-alt"></i>
                     </button>
+                    <!-- <button type="submit" onclick="openConfirmModal('{{ route('admin.departments.destroy', $department) }}')" style="width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; background:transparent; color:#dc2626; border:none; cursor:pointer; transition:0.2s;" title="Supprimer">
+                        <i class="fas fa-trash-alt"></i>
+                    </button> -->
                 </form>
             </div>
         </div>

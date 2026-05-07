@@ -413,5 +413,50 @@
             }
         });
     </script>
+
+
+<!-- Modal de confirmation global -->
+@include('components.confirm-modal')
+
+<form id="deleteForm" method="POST" style="display:none;">
+    @csrf
+    @method('DELETE')
+</form>
+
+<script>
+    function openConfirmModal(url) {
+        const modal = document.getElementById('confirmModal');
+        const form = document.getElementById('deleteForm');
+        form.action = url;
+        modal.style.display = 'flex';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalCancel = document.getElementById('modalCancel');
+        const modalConfirm = document.getElementById('modalConfirm');
+        const modal = document.getElementById('confirmModal');
+
+        if (modalCancel) {
+            modalCancel.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+        }
+
+        if (modalConfirm) {
+            modalConfirm.addEventListener('click', function() {
+                document.getElementById('deleteForm').submit();
+            });
+        }
+
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.style.display = 'none';
+                }
+            });
+        }
+    });
+</script>
+
 </body>
 </html>
