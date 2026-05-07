@@ -306,8 +306,9 @@
                     <i class="fas fa-th-large"></i> Tableau de bord
                 </a>
                 <!-- <a href=""><i class="fas fa-users"></i> Employés</a> -->
-                <a href="{{ route('admin.employees.index') }}"><i class="fas fa-users"></i> Employés</a>
-                <a href="#"><i class="fas fa-sitemap"></i> Départements</a>
+                 <a href="{{ route('admin.employees.index') }}" class="{{ request()->routeIs('admin.employees.*') ? 'active' : '' }}"><i class="fas fa-users"></i> Employés</a>
+                <!-- <a href="#"><i class="fas fa-sitemap"></i> Départements</a> -->
+                 <a href="{{ route('admin.departments.index') }}" class="{{ request()->routeIs('admin.departments.*') ? 'active' : '' }}"><i class="fas fa-sitemap"></i> Départements</a>
             </div>
             <div class="nav-section">
                 <div class="nav-title">Ressources Humaines</div>

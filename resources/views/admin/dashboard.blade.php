@@ -83,7 +83,7 @@
             <p style="color:#6B6B6B; font-size:13px; margin-top:4px;">Gérer vos équipes</p>
         </div>
     </a>
-    <a href="#" style="text-decoration:none; background:#fff; border-radius:12px; padding:24px; box-shadow:0 2px 8px rgba(0,0,0,0.04); display:flex; align-items:center; gap:14px; color:inherit;">
+    <a href="{{ route('admin.departments.index') }}" style="text-decoration:none; background:#fff; border-radius:12px; padding:24px; box-shadow:0 2px 8px rgba(0,0,0,0.04); display:flex; align-items:center; gap:14px; color:inherit;">
         <i class="fas fa-sitemap" style="color:#FF6200; font-size:20px;"></i>
         <div>
             <strong>Départements</strong>

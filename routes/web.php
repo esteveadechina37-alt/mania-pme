@@ -40,7 +40,8 @@ Route::middleware(['auth', 'role:employe,stagiaire'])
         Route::get('/dashboard', [EmployeeDashboard::class, 'index'])->name('dashboard');
     });
 
-// employees
+// Routes pour la gestion des départements (Admin uniquement)
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('employees', \App\Http\Controllers\Admin\EmployeeController::class);
+    Route::resource('departments', \App\Http\Controllers\Admin\DepartmentController::class);
 });
