@@ -118,6 +118,9 @@
                     </option>
                 @endforeach
             </select>
+            @error('manager_id')
+                <span class="error-text">{{ $message }}</span>
+            @enderror
         </div>
     </div>
 

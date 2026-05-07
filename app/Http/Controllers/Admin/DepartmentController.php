@@ -43,22 +43,117 @@ class DepartmentController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:departments,name,NULL,id,company_id,'.auth()->user()->company_id,
-            'description' => 'nullable|string|max:1000',
-            'manager_id' => 'nullable|exists:users,id',
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'manager_id'  => 'nullable|exists:users,id',
+            'description' => 'nullable|string',
         ]);
 
-        Department::create([
+        // 🔒 Vérification : ce manager est-il déjà assigné ailleurs ?
+        if ($request->manager_id) {
+            $exists = Department::where('manager_id', $request->manager_id)->exists();
+            if ($exists) {
+                return back()->withErrors([
+                    'manager_id' => 'Cet utilisateur est déjà manager d’un autre département.',
+                ])->withInput();
+            }
+        }
+
+        $department = Department::create([
             'company_id' => auth()->user()->company_id,
-            'name' => $request->name,
-            'description' => $request->description,
-            'manager_id' => $request->manager_id,
+            ...$validated,
         ]);
+
+        // Synchronisation avec la fiche employé
+        if ($department->manager_id) {
+            $employee = Employee::where('user_id', $department->manager_id)
+                         ->where('company_id', $department->company_id)
+                         ->first();
+            if ($employee) {
+                $employee->department_id = $department->id;
+                $employee->save();
+            } else {
+                Employee::create([
+                    'user_id'       => $department->manager_id,
+                    'company_id'    => $department->company_id,
+                    'department_id' => $department->id,
+                    'position'      => 'Manager',
+                    'status'        => 'active',
+                    'hire_date'     => now(),
+                ]);
+            }
+        }
 
         return redirect()->route('admin.departments.index')
-               ->with('success', 'Département créé avec succès.');
+                         ->with('success', 'Département créé avec succès.');
     }
+
+    // public function store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'name' => 'required|string|max:255',
+    //         'manager_id' => 'nullable|exists:users,id',
+    //         'description' => 'nullable|string',
+    //     ]);
+
+    //      // 🔽 INSÈRE LE CODE ICI
+    //     if ($request->manager_id) {
+    //         $exists = Department::where('manager_id', $request->manager_id)->exists();
+    //         if ($exists) {
+    //             return back()->withErrors(['manager_id' => 'Cet utilisateur est déjà manager d’un autre département.']);
+    //         }
+    //     }
+
+    //     $department = Department::create([
+    //         'company_id' => auth()->user()->company_id,
+    //         ...$validated,
+    //     ]);
+
+    //     // ✅ Mise à jour de l'employé du manager pour lui attribuer ce département
+    //     if ($department->manager_id) {
+    //         $employee = Employee::where('user_id', $department->manager_id)
+    //                     ->where('company_id', $department->company_id)
+    //                     ->first();
+
+    //         if ($employee) {
+    //             // Le manager a déjà une fiche employé → on l’associe au département
+    //             $employee->department_id = $department->id;
+    //             $employee->save();
+    //         } else {
+    //             // Le manager n'a pas encore de fiche employé → on la crée
+    //             Employee::create([
+    //                 'user_id'       => $department->manager_id,
+    //                 'company_id'    => $department->company_id,
+    //                 'department_id' => $department->id,
+    //                 'position'      => 'Manager',
+    //                 'status'        => 'active',
+    //                 'hire_date'     => now(),
+    //             ]);
+    //         }
+    //     }
+
+    //     return redirect()->route('admin.departments.index')
+    //                     ->with('success', 'Département créé.');
+    // }
+
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'name' => 'required|string|max:255|unique:departments,name,NULL,id,company_id,'.auth()->user()->company_id,
+    //         'description' => 'nullable|string|max:1000',
+    //         'manager_id' => 'nullable|exists:users,id',
+    //     ]);
+
+    //     Department::create([
+    //         'company_id' => auth()->user()->company_id,
+    //         'name' => $request->name,
+    //         'description' => $request->description,
+    //         'manager_id' => $request->manager_id,
+    //     ]);
+
+    //     return redirect()->route('admin.departments.index')
+    //            ->with('success', 'Département créé avec succès.');
+    // }
 
     public function show(Department $department)
     {
@@ -81,23 +176,115 @@ class DepartmentController extends Controller
 
     public function update(Request $request, Department $department)
     {
-        $this->authorizeCompany($department);
-
-        $request->validate([
-            'name' => 'required|string|max:255|unique:departments,name,'.$department->id.',id,company_id,'.auth()->user()->company_id,
-            'description' => 'nullable|string|max:1000',
-            'manager_id' => 'nullable|exists:users,id',
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'manager_id'  => 'nullable|exists:users,id',
+            'description' => 'nullable|string',
         ]);
 
-        $department->update([
-            'name' => $request->name,
-            'description' => $request->description,
-            'manager_id' => $request->manager_id,
-        ]);
+        // 🔒 Vérification : ce manager est-il déjà assigné ailleurs ?
+        if ($request->manager_id) {
+            $exists = Department::where('manager_id', $request->manager_id)
+                        ->where('id', '!=', $department->id) // exclut le département en cours
+                        ->exists();
+            if ($exists) {
+                return back()->withErrors([
+                    'manager_id' => 'Cet utilisateur est déjà manager d’un autre département.',
+                ])->withInput();
+            }
+        }
 
-        return redirect()->route('admin.departments.index')
-               ->with('success', 'Département mis à jour.');
+        $department->update($validated);
+
+        // Synchronisation avec la fiche employé
+        if ($department->manager_id) {
+            $employee = Employee::where('user_id', $department->manager_id)
+                         ->where('company_id', $department->company_id)
+                         ->first();
+            if ($employee) {
+                $employee->department_id = $department->id;
+                $employee->save();
+            } else {
+                Employee::create([
+                    'user_id'       => $department->manager_id,
+                    'company_id'    => $department->company_id,
+                    'department_id' => $department->id,
+                    'position'      => 'Manager',
+                    'status'        => 'active',
+                    'hire_date'     => now(),
+                ]);
+            }
+        }
+
+        return redirect()->route('admin.departments.show', $department)
+                         ->with('success', 'Département mis à jour.');
     }
+
+    // public function update(Request $request, Department $department)
+    // {
+    //     $validated = $request->validate([
+    //         'name' => 'required|string|max:255',
+    //         'manager_id' => 'nullable|exists:users,id',
+    //         'description' => 'nullable|string',
+    //     ]);
+
+    //     if ($request->manager_id) {
+    //         $exists = Department::where('manager_id', $request->manager_id)
+    //                     ->where('id', '!=', $department->id) // exclut le département en cours d'édition
+    //                     ->exists();
+    //         if ($exists) {
+    //             return back()->withErrors(['manager_id' => 'Cet utilisateur est déjà manager d’un autre département.']);
+    //         }
+    //     }
+
+    //     $department->update($validated);
+
+    //     // ✅ Mise à jour de l'employé du manager pour lui attribuer ce département
+    //     if ($department->manager_id) {
+    //         $employee = Employee::where('user_id', $department->manager_id)
+    //                     ->where('company_id', $department->company_id)
+    //                     ->first();
+
+    //         if ($employee) {
+    //             // Met à jour le département de l'employé existant
+    //             $employee->department_id = $department->id;
+    //             $employee->save();
+    //         } else {
+    //             // Crée une fiche employé si elle n'existe pas
+    //             Employee::create([
+    //                 'user_id'       => $department->manager_id,
+    //                 'company_id'    => $department->company_id,
+    //                 'department_id' => $department->id,
+    //                 'position'      => 'Manager',
+    //                 'status'        => 'active',
+    //                 'hire_date'     => now(),
+    //             ]);
+    //         }
+    //     }
+
+    //     return redirect()->route('admin.departments.show', $department)
+    //                     ->with('success', 'Département modifié.');
+    // }
+
+    // public function update(Request $request, Department $department)
+    // {
+    //     $this->authorizeCompany($department);
+
+    //     $request->validate([
+    //         'name' => 'required|string|max:255|unique:departments,name,'.$department->id.',id,company_id,'.auth()->user()->company_id,
+    //         'description' => 'nullable|string|max:1000',
+    //         'manager_id' => 'nullable|exists:users,id',
+    //     ]);
+
+    //     $department->update([
+    //         'name' => $request->name,
+    //         'description' => $request->description,
+    //         'manager_id' => $request->manager_id,
+    //     ]);
+
+    //     return redirect()->route('admin.departments.index')
+    //            ->with('success', 'Département mis à jour.');
+    // }
 
     public function destroy(Department $department)
     {
