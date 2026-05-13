@@ -44,7 +44,10 @@ class DashboardController extends Controller
                           ->count();
 
     // Congés en attente : 0 en attendant le module
-    $pendingLeaves = 0;
+    // $pendingLeaves = 0;
+    $pendingLeaves = \App\Models\LeaveRequest::where('company_id', $company->id)
+                      ->where('status', 'pending')
+                      ->count();
 
     // Présences aujourd'hui : 0 en attendant le module
     $todayAttendances = 0;

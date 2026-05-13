@@ -3,36 +3,39 @@
 namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Models\Department;
+use App\Models\LeaveRequest;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $company = auth()->user()->company;
+        $user = auth()->user();
+        $company = $user->company;
 
-        // Pour l'instant, pas de notion d'équipe → membres de l'entreprise ayant le rôle employé (ou stagiaire)
-        // $teamMembersCount = \App\Models\User::where('company_id', $company->id)
-        //     ->whereHas('roles', fn($q) => $q->whereIn('name', ['employe', 'stagiaire']))
-        //     ->count();
-        $teamMembersCount = \App\Models\User::where('company_id', $company->id)
+        // Membres de l'équipe actifs
+        $teamMembersCount = User::where('company_id', $company->id)
             ->where('is_active', true)
             ->whereHas('roles', fn($q) => $q->whereIn('name', ['employe', 'stagiaire']))
             ->count();
 
-        // Demandes de congé en attente → 0 pour le moment
+        // Demandes de congé en attente pour le département du manager
+        $department = Department::where('manager_id', $user->id)->first();
         $pendingRequests = 0;
+        if ($department) {
+            $employeeIds = $department->employees()->pluck('id');
+            $pendingRequests = LeaveRequest::whereIn('employee_id', $employeeIds)
+                ->where('status', 'pending')
+                ->count();
+        }
 
-        // Présences aujourd'hui → 0
-        $presentToday = 0;
-
-        // Dernières demandes (vide)
-        $recentRequests = [];
+        $presentToday = 0; // module à venir
 
         return view('manager.dashboard', compact(
             'teamMembersCount',
             'pendingRequests',
-            'presentToday',
-            'recentRequests'
+            'presentToday'
         ));
     }
 }

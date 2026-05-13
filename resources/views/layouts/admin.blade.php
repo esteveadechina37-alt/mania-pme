@@ -312,7 +312,13 @@
             </div>
             <div class="nav-section">
                 <div class="nav-title">Ressources Humaines</div>
-                <a href="#"><i class="fas fa-calendar-alt"></i> Congés & Absences</a>
+                <!-- <a href="#"><i class="fas fa-calendar-alt"></i> Congés & Absences</a> -->
+                <a href="{{ route('admin.leave-types.index') }}" class="{{ request()->routeIs('admin.leave-types.*') ? 'active' : '' }}">
+                    <i class="fas fa-tags"></i> Types de congés
+                </a>
+                <!-- <a href="{{ route('leave-requests.pending') }}" class="{{ request()->routeIs('leave-requests.pending') ? 'active' : '' }}">
+                    <i class="fas fa-calendar-check"></i> Congés en attente
+                </a> -->
                 <a href="#"><i class="fas fa-clock"></i> Présences</a>
                 <a href="#"><i class="fas fa-money-bill-wave"></i> Paie</a>
                 <a href="#"><i class="fas fa-file-alt"></i> Documents</a>
@@ -326,7 +332,10 @@
                     <i class="fas fa-th-large"></i> Tableau de bord
                 </a>
                 <a href="#"><i class="fas fa-user-friends"></i> Mon équipe</a>
-                <a href="#"><i class="fas fa-calendar-check"></i> Validation congés</a>
+                <a href="{{ route('leave-requests.pending') }}" class="{{ request()->routeIs('leave-requests.pending') ? 'active' : '' }}">
+                    <i class="fas fa-calendar-check"></i> Validation congés
+                </a>
+                <!-- <a href="#"><i class="fas fa-calendar-check"></i> Validation congés</a> -->
             </div>
             @endrole
 
@@ -337,7 +346,13 @@
                     <i class="fas fa-th-large"></i> Tableau de bord
                 </a>
                 <a href="#"><i class="fas fa-user"></i> Mon profil</a>
-                <a href="#"><i class="fas fa-calendar-plus"></i> Demande de congé</a>
+                <a href="{{ route('leave-requests.create') }}" class="{{ request()->routeIs('leave-requests.create') ? 'active' : '' }}">
+                    <i class="fas fa-calendar-plus"></i> Demande de congé
+                </a>
+                <a href="{{ route('leave-requests.index') }}" class="{{ request()->routeIs('leave-requests.index') ? 'active' : '' }}">
+                    <i class="fas fa-list-alt"></i> Mes demandes
+                </a>
+                <!-- <a href="#"><i class="fas fa-calendar-plus"></i> Demande de congé</a> -->
                 <a href="#"><i class="fas fa-file-invoice"></i> Mes fiches de paie</a>
             </div>
             @endrole
@@ -349,6 +364,12 @@
                     <i class="fas fa-th-large"></i> Tableau de bord
                 </a>
                 <a href="#"><i class="fas fa-user-graduate"></i> Mon stage</a>
+                <a href="{{ route('leave-requests.create') }}" class="{{ request()->routeIs('leave-requests.create') ? 'active' : '' }}">
+                    <i class="fas fa-calendar-plus"></i> Demande de congé
+                </a>
+                <a href="{{ route('leave-requests.index') }}" class="{{ request()->routeIs('leave-requests.index') ? 'active' : '' }}">
+                    <i class="fas fa-list-alt"></i> Mes demandes
+                </a>
                 <a href="#"><i class="fas fa-file-signature"></i> Attestations</a>
             </div>
             @endrole

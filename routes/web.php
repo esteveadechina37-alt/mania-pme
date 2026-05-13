@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Manager\DashboardController as ManagerDashboard;
 use App\Http\Controllers\Employee\DashboardController as EmployeeDashboard;
+use App\Http\Controllers\LeaveRequestController;
 
 // Page d'accueil
 // Route::get('/', function () { return view('welcome');});
@@ -44,4 +45,20 @@ Route::middleware(['auth', 'role:employe,stagiaire'])
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('employees', \App\Http\Controllers\Admin\EmployeeController::class);
     Route::resource('departments', \App\Http\Controllers\Admin\DepartmentController::class);
+    Route::resource('leave-types', \App\Http\Controllers\Admin\LeaveTypeController::class);
 });
+
+// Pour managers et admins : validation
+Route::middleware(['auth', 'role:manager,admin'])->group(function () {
+    Route::get('/leave-requests/pending', [LeaveRequestController::class, 'pending'])->name('leave-requests.pending');
+    Route::post('/leave-requests/{leaveRequest}/decide', [LeaveRequestController::class, 'decide'])->name('leave-requests.decide');
+});
+
+// Pour employés/stagiaires
+Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
+    Route::get('/leave-requests', [LeaveRequestController::class, 'index'])->name('leave-requests.index');
+    Route::get('/leave-requests/create', [LeaveRequestController::class, 'create'])->name('leave-requests.create');
+    Route::post('/leave-requests', [LeaveRequestController::class, 'store'])->name('leave-requests.store');
+    Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'show'])->name('leave-requests.show');
+});
+

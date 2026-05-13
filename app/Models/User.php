@@ -42,4 +42,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Company::class);
     }
+    
+    public function approvedLeaveRequests()
+    {
+        return $this->hasMany(LeaveRequest::class, 'approved_by');
+    }
 }
