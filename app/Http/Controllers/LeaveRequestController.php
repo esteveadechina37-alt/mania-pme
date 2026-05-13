@@ -150,23 +150,47 @@ class LeaveRequestController extends Controller
     private function authorizeAccess(LeaveRequest $leaveRequest)
     {
         $user = Auth::user();
-        if ($user->hasRole('admin') && $leaveRequest->company_id === $user->company_id) return;
-        if ($user->employee && $leaveRequest->employee_id === $user->employee->id) return;
-        if ($user->hasRole('manager')) {
-            $dept = \App\Models\Department::where('manager_id', $user->id)->first();
-            if ($dept && $leaveRequest->employee->department_id === $dept->id) return;
-        }
-        abort(403);
+    if ($user->hasRole('admin') && $leaveRequest->company_id === $user->company_id) return;
+
+    // Pour les employés/stagiaires, on récupère (ou crée) la fiche employé
+    if ($user->hasAnyRole(['employe', 'stagiaire'])) {
+        $employee = $this->getEmployee();
+        if ($employee->id === $leaveRequest->employee_id) return;
+    }
+
+    if ($user->hasRole('manager')) {
+        $dept = \App\Models\Department::where('manager_id', $user->id)->first();
+        if ($dept && $leaveRequest->employee->department_id === $dept->id) return;
+    }
+
+    abort(403);
+        // $user = Auth::user();
+        // if ($user->hasRole('admin') && $leaveRequest->company_id === $user->company_id) return;
+        // if ($user->employee && $leaveRequest->employee_id === $user->employee->id) return;
+        // if ($user->hasRole('manager')) {
+        //     $dept = \App\Models\Department::where('manager_id', $user->id)->first();
+        //     if ($dept && $leaveRequest->employee->department_id === $dept->id) return;
+        // }
+        // abort(403);
     }
 
     private function authorizeApproval(LeaveRequest $leaveRequest)
     {
         $user = Auth::user();
-        if ($user->hasRole('admin') && $leaveRequest->company_id === $user->company_id) return;
-        if ($user->hasRole('manager')) {
-            $dept = \App\Models\Department::where('manager_id', $user->id)->first();
-            if ($dept && $leaveRequest->employee->department_id === $dept->id) return;
-        }
-        abort(403);
+    if ($user->hasRole('admin') && $leaveRequest->company_id === $user->company_id) return;
+
+    if ($user->hasRole('manager')) {
+        $dept = \App\Models\Department::where('manager_id', $user->id)->first();
+        if ($dept && $leaveRequest->employee->department_id === $dept->id) return;
+    }
+
+    abort(403);
+        // $user = Auth::user();
+        // if ($user->hasRole('admin') && $leaveRequest->company_id === $user->company_id) return;
+        // if ($user->hasRole('manager')) {
+        //     $dept = \App\Models\Department::where('manager_id', $user->id)->first();
+        //     if ($dept && $leaveRequest->employee->department_id === $dept->id) return;
+        // }
+        // abort(403);
     }
 }
