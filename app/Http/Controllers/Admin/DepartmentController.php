@@ -23,10 +23,17 @@ class DepartmentController extends Controller
     public function index()
     {
         $companyId = auth()->user()->company_id;
+        // $departments = Department::where('company_id', $companyId)
+        //                 ->with('manager')
+        //                 ->withCount('employees')
+        //                 ->paginate(15);
         $departments = Department::where('company_id', $companyId)
-                        ->with('manager')
-                        ->withCount('employees')
-                        ->paginate(15);
+                ->with('manager')
+                ->withCount(['employees' => function ($query) {
+                    $query->where('status', 'active')
+                          ->whereNull('deleted_at');
+                }])
+                ->paginate(15);
 
         return view('admin.departments.index', compact('departments'));
     }
@@ -34,9 +41,13 @@ class DepartmentController extends Controller
     public function create()
     {
         // Récupère les managers possibles (utilisateurs ayant le rôle manager dans la même boîte)
+        // $managers = User::where('company_id', auth()->user()->company_id)
+        //              ->whereHas('roles', fn($q) => $q->where('name', 'manager'))
+        //              ->get();
         $managers = User::where('company_id', auth()->user()->company_id)
-                     ->whereHas('roles', fn($q) => $q->where('name', 'manager'))
-                     ->get();
+            ->where('is_active', true)
+            ->whereHas('roles', fn($q) => $q->where('name', 'manager'))
+            ->get();
 
         return view('admin.departments.create', compact('managers'));
     }
@@ -158,18 +169,35 @@ class DepartmentController extends Controller
     public function show(Department $department)
     {
         $this->authorizeCompany($department);
-        $department->load('manager', 'employees.user');
+        $department->load('manager');
+        $department->load(['employees' => function ($query) {
+            $query->where('status', 'active')
+                ->whereNull('deleted_at')
+                ->with('user');
+        }]);
 
         return view('admin.departments.show', compact('department'));
     }
+
+    // public function show(Department $department)
+    // {
+    //     $this->authorizeCompany($department);
+    //     $department->load('manager', 'employees.user');
+
+    //     return view('admin.departments.show', compact('department'));
+    // }
 
     public function edit(Department $department)
     {
         $this->authorizeCompany($department);
 
+        // $managers = User::where('company_id', auth()->user()->company_id)
+        //              ->whereHas('roles', fn($q) => $q->where('name', 'manager'))
+        //              ->get();
         $managers = User::where('company_id', auth()->user()->company_id)
-                     ->whereHas('roles', fn($q) => $q->where('name', 'manager'))
-                     ->get();
+            ->where('is_active', true)
+            ->whereHas('roles', fn($q) => $q->where('name', 'manager'))
+            ->get();
 
         return view('admin.departments.edit', compact('department', 'managers'));
     }

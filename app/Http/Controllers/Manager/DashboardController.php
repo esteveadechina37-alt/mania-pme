@@ -11,7 +11,11 @@ class DashboardController extends Controller
         $company = auth()->user()->company;
 
         // Pour l'instant, pas de notion d'équipe → membres de l'entreprise ayant le rôle employé (ou stagiaire)
+        // $teamMembersCount = \App\Models\User::where('company_id', $company->id)
+        //     ->whereHas('roles', fn($q) => $q->whereIn('name', ['employe', 'stagiaire']))
+        //     ->count();
         $teamMembersCount = \App\Models\User::where('company_id', $company->id)
+            ->where('is_active', true)
             ->whereHas('roles', fn($q) => $q->whereIn('name', ['employe', 'stagiaire']))
             ->count();
 

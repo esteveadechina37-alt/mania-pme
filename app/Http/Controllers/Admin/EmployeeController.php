@@ -19,29 +19,80 @@ class EmployeeController extends Controller
     //                   ->paginate(15);
     //     return view('admin.employees.index', compact('employees'));
     // }
+    // public function index()
+    //     {
+    //         $companyId = auth()->user()->company_id;
+
+    //         // Liste des employés paginée
+    //         $employees = Employee::where('company_id', $companyId)
+    //                     ->with('user', 'department')
+    //                     ->paginate(15);
+
+    //         // Statistiques dynamiques
+    //         $totalEmployees = $employees->total(); // nombre total d'employés (tient compte de la pagination)
+    //         $activeCount    = Employee::where('company_id', $companyId)->where('status', 'active')->count();
+    //         $onLeaveCount   = 0; // sera calculé plus tard avec la table leave_requests
+    //         $departmentsCount = \App\Models\Department::where('company_id', $companyId)->count();
+
+    //         return view('admin.employees.index', compact(
+    //             'employees',
+    //             'totalEmployees',
+    //             'activeCount',
+    //             'onLeaveCount',
+    //             'departmentsCount'
+    //         ));
+    //     }
+
     public function index()
-        {
-            $companyId = auth()->user()->company_id;
+    {
+        $companyId = auth()->user()->company_id;
 
-            // Liste des employés paginée
-            $employees = Employee::where('company_id', $companyId)
-                        ->with('user', 'department')
-                        ->paginate(15);
+        // Tous les employés non supprimés (soft delete), avec leur utilisateur et département
+        $employees = Employee::where('company_id', $companyId)
+                    ->whereNull('deleted_at') // sécurité, normalement automatique
+                    ->with('user', 'department')
+                    ->orderBy('status') // pour grouper éventuellement
+                    ->paginate(15);
 
-            // Statistiques dynamiques
-            $totalEmployees = $employees->total(); // nombre total d'employés (tient compte de la pagination)
-            $activeCount    = Employee::where('company_id', $companyId)->where('status', 'active')->count();
-            $onLeaveCount   = 0; // sera calculé plus tard avec la table leave_requests
-            $departmentsCount = \App\Models\Department::where('company_id', $companyId)->count();
+        // Statistiques
+        $totalEmployees = Employee::where('company_id', $companyId)->count(); // total non supprimés
+        $activeCount    = Employee::where('company_id', $companyId)->where('status', 'active')->count();
+        $onLeaveCount   = 0; // plus tard
+        $departmentsCount = \App\Models\Department::where('company_id', $companyId)->count();
 
-            return view('admin.employees.index', compact(
-                'employees',
-                'totalEmployees',
-                'activeCount',
-                'onLeaveCount',
-                'departmentsCount'
-            ));
-        }
+        return view('admin.employees.index', compact(
+            'employees',
+            'totalEmployees',
+            'activeCount',
+            'onLeaveCount',
+            'departmentsCount'
+        ));
+    }
+
+    // public function index()
+    // {
+    //     $companyId = auth()->user()->company_id;
+
+    //     // Liste des employés ACTIFS uniquement
+    //     $employees = Employee::where('company_id', $companyId)
+    //                 ->where('status', 'active')
+    //                 ->with('user', 'department')
+    //                 ->paginate(15);
+
+    //     // Statistiques dynamiques (basées sur les actifs)
+    //     $totalEmployees = $employees->total();        // total des actifs
+    //     $activeCount    = $employees->total();        // identique ici (tous sont actifs)
+    //     $onLeaveCount   = 0;                          // futur module congés
+    //     $departmentsCount = \App\Models\Department::where('company_id', $companyId)->count();
+
+    //     return view('admin.employees.index', compact(
+    //         'employees',
+    //         'totalEmployees',
+    //         'activeCount',
+    //         'onLeaveCount',
+    //         'departmentsCount'
+    //     ));
+    // }
 
     public function create()
     {
@@ -137,22 +188,51 @@ class EmployeeController extends Controller
             'status' => $request->status
         ]);
 
+        // --- AJOUT : Désassigner le département si le statut n'est plus actif ---
+        if ($request->status !== 'active') {
+            $employee->department_id = null;
+            $employee->save();
+        }
+
+        // Synchronisation de l'état actif de l'utilisateur (déjà présente)
+        $activeStatuses = ['active'];
+        if (in_array($request->status, $activeStatuses)) {
+            $employee->user->update(['is_active' => true]);
+        } else {
+            $employee->user->update(['is_active' => false]);
+        }
+
         return redirect()->route('admin.employees.index')
                ->with('success', 'Employé mis à jour.');
     }
 
+    // public function destroy(Employee $employee)
+    // {
+    //     $this->authorizeCompany($employee);
+
+    //     // Désactiver l'utilisateur lié (optionnel, évite qu'il se connecte)
+    //     $employee->user->update(['is_active' => false]);
+
+    //     // Soft delete de l'employé uniquement
+    //     $employee->delete();
+
+    //     return redirect()->route('admin.employees.index')
+    //         ->with('success', 'Employé supprimé (soft delete).');
+    // }
     public function destroy(Employee $employee)
     {
         $this->authorizeCompany($employee);
 
-        // Désactiver l'utilisateur lié (optionnel, évite qu'il se connecte)
-        $employee->user->update(['is_active' => false]);
+        // Désactiver l'utilisateur lié (il ne pourra plus se connecter)
+        if ($employee->user) {
+            $employee->user->update(['is_active' => false]);
+        }
 
-        // Soft delete de l'employé uniquement
+        // Soft delete de l'employé (remplit deleted_at sans effacer la ligne)
         $employee->delete();
 
         return redirect()->route('admin.employees.index')
-            ->with('success', 'Employé supprimé (soft delete).');
+            ->with('success', 'Employé supprimé (désactivé).');
     }
 
     // public function destroy(Employee $employee)

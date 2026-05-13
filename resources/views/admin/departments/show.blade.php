@@ -164,7 +164,7 @@
             <div>
                 <div style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Manager</div>
                 <div style="font-weight: 600;">
-                    @if($department->manager)
+                    @if($department->manager && $department->manager->is_active)
                         <span class="badge-pill"><i class="fas fa-user-check"></i> {{ $department->manager->name }}</span>
                     @else
                         <span style="color: #9ca3af;">Non assigné</span>

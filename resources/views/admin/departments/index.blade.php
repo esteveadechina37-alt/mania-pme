@@ -38,7 +38,7 @@
             <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
                 <div style="display:flex; align-items:center; gap:8px; color:#4b5563; font-size:14px;">
                     <i class="fas fa-user-tie" style="color:#FF6200; width:16px; text-align:center;"></i>
-                    <span>{{ $department->manager->name ?? 'Manager non assigné' }}</span>
+                    <span>{{$department->manager && $department->manager->is_active ? $department->manager->name : 'Manager non assigné' }}</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px; color:#4b5563; font-size:14px;">
                     <i class="fas fa-align-left" style="color:#FF6200; width:16px; text-align:center;"></i>

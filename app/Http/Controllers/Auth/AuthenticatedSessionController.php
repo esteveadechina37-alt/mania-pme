@@ -30,6 +30,15 @@ class AuthenticatedSessionController extends Controller
 
         $user = auth()->user();
 
+         if (!$user->is_active) {
+        auth()->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect()->route('login')->withErrors([
+            'email' => 'Votre compte a été désactivé.',
+        ]);
+    }
+
         if ($user->hasRole('super-admin') || $user->hasRole('admin')) {
             return redirect()->route('admin.dashboard');
         } elseif ($user->hasRole('manager')) {
