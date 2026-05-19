@@ -14,14 +14,18 @@ class DashboardController extends Controller
         $user = auth()->user();
         $company = $user->company;
 
-        // Membres de l'équipe actifs
+        // Département dont le manager est responsable
+        $department = Department::withCount(['employees' => function ($q) {
+            $q->where('status', 'active')->whereNull('deleted_at');
+        }])->where('manager_id', $user->id)->first();
+
+        // Membres de l'équipe actifs dans l'entreprise
         $teamMembersCount = User::where('company_id', $company->id)
             ->where('is_active', true)
             ->whereHas('roles', fn($q) => $q->whereIn('name', ['employe', 'stagiaire']))
             ->count();
 
         // Demandes de congé en attente pour le département du manager
-        $department = Department::where('manager_id', $user->id)->first();
         $pendingRequests = 0;
         if ($department) {
             $employeeIds = $department->employees()->pluck('id');
@@ -30,12 +34,23 @@ class DashboardController extends Controller
                 ->count();
         }
 
-        $presentToday = 0; // module à venir
+        $presentToday = 0; // sera dynamisé avec le module présences
+
+        // Employés du département (actifs)
+        $teamUsers = $department
+            ? $department->employees()
+                ->where('status', 'active')
+                ->whereNull('deleted_at')
+                ->with('user')
+                ->take(5)->get()
+            : collect();
 
         return view('manager.dashboard', compact(
             'teamMembersCount',
             'pendingRequests',
-            'presentToday'
+            'presentToday',
+            'department',
+            'teamUsers'
         ));
     }
 }

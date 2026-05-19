@@ -54,18 +54,40 @@ Route::middleware(['auth', 'role:manager,admin'])->group(function () {
     Route::post('/leave-requests/{leaveRequest}/decide', [LeaveRequestController::class, 'decide'])->name('leave-requests.decide');
 });
 
-// Pour employés/stagiaires
-// Pour employés/stagiaires (et aussi le manager pour voir le détail)
-Route::middleware(['auth', 'role:employe,stagiaire,manager'])->group(function () {
+// Pour employés/stagiaires UNIQUEMENT (index, create, store)
+Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
     Route::get('/leave-requests', [LeaveRequestController::class, 'index'])->name('leave-requests.index');
     Route::get('/leave-requests/create', [LeaveRequestController::class, 'create'])->name('leave-requests.create');
     Route::post('/leave-requests', [LeaveRequestController::class, 'store'])->name('leave-requests.store');
+});
+
+// Pour le détail d'une demande : employés, stagiaires ET managers (validation)
+Route::middleware(['auth', 'role:employe,stagiaire,manager'])->group(function () {
     Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'show'])->name('leave-requests.show');
 });
-// Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
+
+
+
+
+
+// // Pour managers et admins : validation
+// Route::middleware(['auth', 'role:manager,admin'])->group(function () {
+//     Route::get('/leave-requests/pending', [LeaveRequestController::class, 'pending'])->name('leave-requests.pending');
+//     Route::post('/leave-requests/{leaveRequest}/decide', [LeaveRequestController::class, 'decide'])->name('leave-requests.decide');
+// });
+
+// // Pour employés/stagiaires
+// // Pour employés/stagiaires (et aussi le manager pour voir le détail)
+// Route::middleware(['auth', 'role:employe,stagiaire,manager'])->group(function () {
 //     Route::get('/leave-requests', [LeaveRequestController::class, 'index'])->name('leave-requests.index');
 //     Route::get('/leave-requests/create', [LeaveRequestController::class, 'create'])->name('leave-requests.create');
 //     Route::post('/leave-requests', [LeaveRequestController::class, 'store'])->name('leave-requests.store');
 //     Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'show'])->name('leave-requests.show');
 // });
+// // Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
+// //     Route::get('/leave-requests', [LeaveRequestController::class, 'index'])->name('leave-requests.index');
+// //     Route::get('/leave-requests/create', [LeaveRequestController::class, 'create'])->name('leave-requests.create');
+// //     Route::post('/leave-requests', [LeaveRequestController::class, 'store'])->name('leave-requests.store');
+// //     Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'show'])->name('leave-requests.show');
+// // });
 

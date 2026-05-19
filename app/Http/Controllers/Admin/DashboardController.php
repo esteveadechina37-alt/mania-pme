@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\LeaveRequest;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -34,36 +35,73 @@ class DashboardController extends Controller
     //         'recentUsers'
     //     ));
     // }
+//     public function index()
+// {
+//     $company = auth()->user()->company;
+
+//     // Total des utilisateurs actifs de l'entreprise (tous rôles confondus)
+//     $totalEmployees = User::where('company_id', $company->id)
+//                           ->where('is_active', true)
+//                           ->count();
+
+//     // Congés en attente : 0 en attendant le module
+//     // $pendingLeaves = 0;
+//     $pendingLeaves = \App\Models\LeaveRequest::where('company_id', $company->id)
+//                       ->where('status', 'pending')
+//                       ->count();
+
+//     // Présences aujourd'hui : 0 en attendant le module
+//     $todayAttendances = 0;
+
+//     // Derniers utilisateurs actifs
+//     $recentUsers = User::where('company_id', $company->id)
+//                        ->where('is_active', true)
+//                        ->latest()
+//                        ->take(5)
+//                        ->get();
+
+//     return view('admin.dashboard', compact(
+//         'totalEmployees',
+//         'pendingLeaves',
+//         'todayAttendances',
+//         'recentUsers'
+//     ));
+// }
+
     public function index()
-{
-    $company = auth()->user()->company;
+    {
+        $company = auth()->user()->company;
 
-    // Total des utilisateurs actifs de l'entreprise (tous rôles confondus)
-    $totalEmployees = User::where('company_id', $company->id)
-                          ->where('is_active', true)
-                          ->count();
+        $totalEmployees = User::where('company_id', $company->id)
+                            ->where('is_active', true)
+                            ->count();
 
-    // Congés en attente : 0 en attendant le module
-    // $pendingLeaves = 0;
-    $pendingLeaves = \App\Models\LeaveRequest::where('company_id', $company->id)
-                      ->where('status', 'pending')
-                      ->count();
+        $pendingLeaves = LeaveRequest::where('company_id', $company->id)
+                            ->where('status', 'pending')
+                            ->count();
 
-    // Présences aujourd'hui : 0 en attendant le module
-    $todayAttendances = 0;
+        $todayAttendances = 0; // sera implémenté avec le module présences
 
-    // Derniers utilisateurs actifs
-    $recentUsers = User::where('company_id', $company->id)
-                       ->where('is_active', true)
-                       ->latest()
-                       ->take(5)
-                       ->get();
+        $recentUsers = User::where('company_id', $company->id)
+                        ->where('is_active', true)
+                        ->latest()
+                        ->take(5)
+                        ->get();
 
-    return view('admin.dashboard', compact(
-        'totalEmployees',
-        'pendingLeaves',
-        'todayAttendances',
-        'recentUsers'
-    ));
-}
+        // Nouveau : répartition des employés actifs par département
+        $departmentsStats = \App\Models\Department::where('company_id', $company->id)
+                                ->withCount(['employees' => function ($q) {
+                                    $q->where('status', 'active')->whereNull('deleted_at');
+                                }])
+                                ->orderByDesc('employees_count')
+                                ->get();
+
+        return view('admin.dashboard', compact(
+            'totalEmployees',
+            'pendingLeaves',
+            'todayAttendances',
+            'recentUsers',
+            'departmentsStats'   // ← nouvelle variable
+        ));
+    }
 }

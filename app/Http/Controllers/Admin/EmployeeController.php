@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\User;
 use App\Models\Department;
+use App\Models\LeaveRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -43,21 +44,56 @@ class EmployeeController extends Controller
     //         ));
     //     }
 
+    // public function index()
+    // {
+    //     $companyId = auth()->user()->company_id;
+
+    //     // Tous les employés non supprimés (soft delete), avec leur utilisateur et département
+    //     $employees = Employee::where('company_id', $companyId)
+    //                 ->whereNull('deleted_at') // sécurité, normalement automatique
+    //                 ->with('user', 'department')
+    //                 ->orderBy('status') // pour grouper éventuellement
+    //                 ->paginate(15);
+
+    //     // Statistiques
+    //     $totalEmployees = Employee::where('company_id', $companyId)->count(); // total non supprimés
+    //     $activeCount    = Employee::where('company_id', $companyId)->where('status', 'active')->count();
+    //     $onLeaveCount   = 0; // plus tard
+    //     $departmentsCount = \App\Models\Department::where('company_id', $companyId)->count();
+
+    //     return view('admin.employees.index', compact(
+    //         'employees',
+    //         'totalEmployees',
+    //         'activeCount',
+    //         'onLeaveCount',
+    //         'departmentsCount'
+    //     ));
+    // }
     public function index()
     {
         $companyId = auth()->user()->company_id;
+        $today = now()->toDateString();
 
-        // Tous les employés non supprimés (soft delete), avec leur utilisateur et département
+        // Tous les employés non supprimés (soft delete), avec leur user et département
         $employees = Employee::where('company_id', $companyId)
-                    ->whereNull('deleted_at') // sécurité, normalement automatique
+                    ->whereNull('deleted_at')
                     ->with('user', 'department')
-                    ->orderBy('status') // pour grouper éventuellement
+                    ->orderBy('status')
                     ->paginate(15);
 
-        // Statistiques
-        $totalEmployees = Employee::where('company_id', $companyId)->count(); // total non supprimés
+        // Statistiques dynamiques
+        $totalEmployees = Employee::where('company_id', $companyId)->count(); // tous, sauf soft-deleted
         $activeCount    = Employee::where('company_id', $companyId)->where('status', 'active')->count();
-        $onLeaveCount   = 0; // plus tard
+
+        // Employés en congé : ceux ayant une demande approuvée couvrant la date du jour
+        $onLeaveCount = Employee::where('company_id', $companyId)
+            ->whereHas('leaveRequests', function ($query) use ($today) {
+                $query->where('status', 'approved')
+                    ->where('start_date', '<=', $today)
+                    ->where('end_date', '>=', $today);
+            })
+            ->count();
+
         $departmentsCount = \App\Models\Department::where('company_id', $companyId)->count();
 
         return view('admin.employees.index', compact(
@@ -140,11 +176,27 @@ class EmployeeController extends Controller
                ->with('success', 'Employé créé avec succès.');
     }
 
+    // public function show(Employee $employee)
+    // {
+    //     $this->authorizeCompany($employee);
+    //     $employee->load('user', 'department');
+    //     return view('admin.employees.show', compact('employee'));
+    // }
     public function show(Employee $employee)
     {
         $this->authorizeCompany($employee);
         $employee->load('user', 'department');
-        return view('admin.employees.show', compact('employee'));
+
+        // Vérifier si l'employé est en congé aujourd'hui
+        $today = now()->toDateString();
+        $currentLeave = $employee->leaveRequests()
+            ->where('status', 'approved')
+            ->where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->with('leaveType')
+            ->first();
+
+        return view('admin.employees.show', compact('employee', 'currentLeave'));
     }
 
     public function edit(Employee $employee)
