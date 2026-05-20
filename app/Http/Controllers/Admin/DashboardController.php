@@ -80,7 +80,10 @@ class DashboardController extends Controller
                             ->where('status', 'pending')
                             ->count();
 
-        $todayAttendances = 0; // sera implémenté avec le module présences
+        // $todayAttendances = 0; // sera implémenté avec le module présences
+        $todayAttendances = \App\Models\Attendance::where('company_id', $company->id)
+                      ->where('date', now()->toDateString())
+                      ->count();
 
         $recentUsers = User::where('company_id', $company->id)
                         ->where('is_active', true)

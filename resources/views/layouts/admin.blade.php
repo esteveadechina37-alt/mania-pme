@@ -319,7 +319,9 @@
                 <!-- <a href="{{ route('leave-requests.pending') }}" class="{{ request()->routeIs('leave-requests.pending') ? 'active' : '' }}">
                     <i class="fas fa-calendar-check"></i> Congés en attente
                 </a> -->
-                <a href="#"><i class="fas fa-clock"></i> Présences</a>
+                <a href="{{ route('attendances.list') }}" class="{{ request()->routeIs('attendances.list') ? 'active' : '' }}">
+                    <i class="fas fa-clock"></i> Présences
+                </a>
                 <a href="#"><i class="fas fa-money-bill-wave"></i> Paie</a>
                 <a href="#"><i class="fas fa-file-alt"></i> Documents</a>
             </div>
@@ -334,6 +336,9 @@
                 <a href="#"><i class="fas fa-user-friends"></i> Mon équipe</a>
                 <a href="{{ route('leave-requests.pending') }}" class="{{ request()->routeIs('leave-requests.pending') ? 'active' : '' }}">
                     <i class="fas fa-calendar-check"></i> Validation congés
+                </a>
+                <a href="{{ route('attendances.list') }}" class="{{ request()->routeIs('attendances.list') ? 'active' : '' }}">
+                    <i class="fas fa-clock"></i> Présences
                 </a>
                 <!-- <a href="#"><i class="fas fa-calendar-check"></i> Validation congés</a> -->
             </div>
@@ -352,6 +357,12 @@
                 <a href="{{ route('leave-requests.index') }}" class="{{ request()->routeIs('leave-requests.index') ? 'active' : '' }}">
                     <i class="fas fa-list-alt"></i> Mes demandes
                 </a>
+                <a href="{{ route('attendances.index') }}" class="{{ request()->routeIs('attendances.index') ? 'active' : '' }}">
+                    <i class="fas fa-user-check"></i> Pointage
+                </a>
+                <a href="{{ route('attendances.history') }}" class="{{ request()->routeIs('attendances.history') ? 'active' : '' }}">
+                    <i class="fas fa-history"></i> Historique
+                </a>
                 <!-- <a href="#"><i class="fas fa-calendar-plus"></i> Demande de congé</a> -->
                 <a href="#"><i class="fas fa-file-invoice"></i> Mes fiches de paie</a>
             </div>
@@ -369,6 +380,12 @@
                 </a>
                 <a href="{{ route('leave-requests.index') }}" class="{{ request()->routeIs('leave-requests.index') ? 'active' : '' }}">
                     <i class="fas fa-list-alt"></i> Mes demandes
+                </a>
+                <a href="{{ route('attendances.index') }}" class="{{ request()->routeIs('attendances.index') ? 'active' : '' }}">
+                    <i class="fas fa-user-check"></i> Pointage
+                </a>
+                <a href="{{ route('attendances.history') }}" class="{{ request()->routeIs('attendances.history') ? 'active' : '' }}">
+                    <i class="fas fa-history"></i> Historique
                 </a>
                 <a href="#"><i class="fas fa-file-signature"></i> Attestations</a>
             </div>

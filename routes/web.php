@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Manager\DashboardController as ManagerDashboard;
 use App\Http\Controllers\Employee\DashboardController as EmployeeDashboard;
 use App\Http\Controllers\LeaveRequestController;
+use App\Http\Controllers\AttendanceController;
 
 // Page d'accueil
 // Route::get('/', function () { return view('welcome');});
@@ -66,7 +67,18 @@ Route::middleware(['auth', 'role:employe,stagiaire,manager'])->group(function ()
     Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'show'])->name('leave-requests.show');
 });
 
+// Pointage (employé/stagiaire)
+Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
+    Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances.index');
+    Route::post('/attendances/check-in', [AttendanceController::class, 'checkIn'])->name('attendances.checkin');
+    Route::post('/attendances/check-out', [AttendanceController::class, 'checkOut'])->name('attendances.checkout');
+    Route::get('/attendances/history', [AttendanceController::class, 'history'])->name('attendances.history');
+});
 
+// Consultation des présences (manager/admin)
+Route::middleware(['auth', 'role:manager,admin'])->group(function () {
+    Route::get('/attendances/list', [AttendanceController::class, 'list'])->name('attendances.list');
+});
 
 
 

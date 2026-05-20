@@ -20,6 +20,9 @@ class Company extends Model
         'logo',
         'employees_count',
         'is_active',
+        'latitude',
+        'longitude',
+        'geofence_radius',
     ];
 
     protected function casts(): array

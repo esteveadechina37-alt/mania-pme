@@ -35,7 +35,13 @@ class DashboardController extends Controller
         }
 
         $presentToday = 0; // sera dynamisé avec le module présences
-
+        $presentToday = 0;
+        if ($department) {
+            $presentToday = \App\Models\Attendance::whereIn('employee_id', $department->employees()->pluck('id'))
+                            ->where('date', now()->toDateString())
+                            ->count();
+        }
+        
         // Employés du département (actifs)
         $teamUsers = $department
             ? $department->employees()
