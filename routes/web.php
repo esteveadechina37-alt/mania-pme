@@ -73,11 +73,14 @@ Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
     Route::post('/attendances/check-in', [AttendanceController::class, 'checkIn'])->name('attendances.checkin');
     Route::post('/attendances/check-out', [AttendanceController::class, 'checkOut'])->name('attendances.checkout');
     Route::get('/attendances/history', [AttendanceController::class, 'history'])->name('attendances.history');
+    Route::get('/attendances/weekly', [AttendanceController::class, 'weekly'])->name('attendances.weekly');
+    Route::get('/attendances/export-pdf', [AttendanceController::class, 'exportPdf'])->name('attendances.export-pdf');
 });
 
 // Consultation des présences (manager/admin)
 Route::middleware(['auth', 'role:manager,admin'])->group(function () {
     Route::get('/attendances/list', [AttendanceController::class, 'list'])->name('attendances.list');
+    Route::get('/attendances/export-list-pdf', [AttendanceController::class, 'exportListPdf'])->name('attendances.export-list-pdf');
 });
 
 

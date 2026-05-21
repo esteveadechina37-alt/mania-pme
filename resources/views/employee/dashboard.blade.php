@@ -417,20 +417,28 @@
 {{-- Bento Grid Statistiques --}}
 <div class="bento-grid">
     <div class="bento-card animate-in delay-1">
-        <div>
-            <div class="bento-header">
-                <span class="bento-label">Congés restants</span>
-                <div class="bento-icon"><i class="fas fa-calendar-plus"></i></div>
-            </div>
-            <div class="bento-body">
-                <h2 class="bento-value">{{ $congesRestants }} jours</h2>
-            </div>
+    <div>
+        <div class="bento-header">
+            <span class="bento-label">Congé en cours</span>
+            <div class="bento-icon"><i class="fas fa-umbrella-beach"></i></div>
         </div>
-        <div class="bento-footer">
-            <span class="trend-pill trend-success"><i class="fas fa-check"></i> Disponible</span>
-            <span>Cette année</span>
+        <div class="bento-body">
+            @if($currentLeave)
+                <h2 class="bento-value">{{ $joursRestants }} jour(s)</h2>
+                <p style="font-size:12px; color:var(--gray-600);">restant(s)</p>
+            @else
+                <h2 class="bento-value" style="font-size: 28px;">Aucun</h2>
+            @endif
         </div>
     </div>
+    <div class="bento-footer">
+        @if($currentLeave)
+            <span class="trend-pill trend-warning"><i class="fas fa-clock"></i> Retour le {{ \Carbon\Carbon::parse($currentLeave->end_date)->format('d/m/Y') }}</span>
+        @else
+            <span class="trend-pill trend-success"><i class="fas fa-check"></i> Pas de congé en cours</span>
+        @endif
+    </div>
+</div>
 
     <div class="bento-card animate-in delay-2">
         <div>

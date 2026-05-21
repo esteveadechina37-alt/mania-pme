@@ -92,13 +92,25 @@ class AttendanceController extends Controller
         }
 
         // Créer le pointage
+        $status = 'present';
+        // Heure limite d'arrivée : 08:30
+        if (now()->toTimeString() > '08:30:00') {
+            $status = 'late';
+        }
         Attendance::create([
             'employee_id' => $employee->id,
             'company_id'  => $employee->company_id,
             'date'        => $today,
             'check_in'    => $now,
-            'status'      => 'present',
+            'status'      => $status,
         ]);
+        // Attendance::create([
+        //     'employee_id' => $employee->id,
+        //     'company_id'  => $employee->company_id,
+        //     'date'        => $today,
+        //     'check_in'    => $now,
+        //     'status'      => 'present',
+        // ]);
 
         return back()->with('success', 'Arrivée pointée avec succès à ' . date('H:i'));
     }
@@ -213,14 +225,15 @@ class AttendanceController extends Controller
     /**
      * Liste des présences pour le manager (son département) ou l'admin (toute l'entreprise).
      */
-    public function list()
+    public function list(Request $request)
     {
         $user = Auth::user();
         $companyId = $user->company_id;
+        $date = $request->date ?: now()->toDateString(); // date sélectionnée ou aujourd'hui
 
         if ($user->hasRole('admin')) {
             $attendances = Attendance::where('company_id', $companyId)
-                            ->where('date', now()->toDateString())
+                            ->where('date', $date)
                             ->with('employee.user')
                             ->paginate(15);
         } elseif ($user->hasRole('manager')) {
@@ -228,7 +241,7 @@ class AttendanceController extends Controller
             if ($department) {
                 $employeeIds = $department->employees()->pluck('id');
                 $attendances = Attendance::whereIn('employee_id', $employeeIds)
-                                ->where('date', now()->toDateString())
+                                ->where('date', $date)
                                 ->with('employee.user')
                                 ->paginate(15);
             } else {
@@ -238,8 +251,35 @@ class AttendanceController extends Controller
             abort(403);
         }
 
-        return view('attendances.list', compact('attendances'));
+        return view('attendances.list', compact('attendances', 'date'));
     }
+    // public function list()
+    // {
+    //     $user = Auth::user();
+    //     $companyId = $user->company_id;
+
+    //     if ($user->hasRole('admin')) {
+    //         $attendances = Attendance::where('company_id', $companyId)
+    //                         ->where('date', now()->toDateString())
+    //                         ->with('employee.user')
+    //                         ->paginate(15);
+    //     } elseif ($user->hasRole('manager')) {
+    //         $department = \App\Models\Department::where('manager_id', $user->id)->first();
+    //         if ($department) {
+    //             $employeeIds = $department->employees()->pluck('id');
+    //             $attendances = Attendance::whereIn('employee_id', $employeeIds)
+    //                             ->where('date', now()->toDateString())
+    //                             ->with('employee.user')
+    //                             ->paginate(15);
+    //         } else {
+    //             $attendances = collect([]);
+    //         }
+    //     } else {
+    //         abort(403);
+    //     }
+
+    //     return view('attendances.list', compact('attendances'));
+    // }
 
     /**
  * Calcule la distance (en mètres) entre deux points GPS (formule de Haversine).
@@ -257,5 +297,67 @@ class AttendanceController extends Controller
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
         return $earthRadius * $c;
+    }
+
+        /**
+     * Récapitulatif hebdomadaire pour l'employé connecté.
+     */
+    public function weekly()
+    {
+        $employee = $this->getEmployee();
+        $startOfWeek = now()->startOfWeek(); // lundi
+        $endOfWeek = now()->endOfWeek();     // dimanche
+
+        $attendances = Attendance::where('employee_id', $employee->id)
+                        ->whereBetween('date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
+                        ->orderBy('date')
+                        ->get();
+
+        $totalLate = $attendances->where('status', 'late')->count();
+        $totalPresent = $attendances->where('status', 'present')->count();
+
+        return view('attendances.weekly', compact('attendances', 'startOfWeek', 'endOfWeek', 'totalLate', 'totalPresent'));
+    }
+
+        public function exportPdf()
+    {
+        $employee = $this->getEmployee();
+        $attendances = Attendance::where('employee_id', $employee->id)
+                        ->orderBy('date', 'desc')
+                        ->get();
+
+        $pdf = \PDF::loadView('attendances.pdf', compact('attendances', 'employee'));
+        return $pdf->download('pointages-'.$employee->user->name.'.pdf');
+    }
+
+    //  la méthode d’export PDF pour la liste des présences (admin/manager)
+    public function exportListPdf(Request $request)
+    {
+        $user = Auth::user();
+        $companyId = $user->company_id;
+        $date = $request->date ?: now()->toDateString();
+
+        if ($user->hasRole('admin')) {
+            $attendances = Attendance::where('company_id', $companyId)
+                            ->where('date', $date)
+                            ->with('employee.user')
+                            ->get();
+        } elseif ($user->hasRole('manager')) {
+            $department = \App\Models\Department::where('manager_id', $user->id)->first();
+            if ($department) {
+                $employeeIds = $department->employees()->pluck('id');
+                $attendances = Attendance::whereIn('employee_id', $employeeIds)
+                                ->where('date', $date)
+                                ->with('employee.user')
+                                ->get();
+            } else {
+                $attendances = collect([]);
+            }
+        } else {
+            abort(403);
+        }
+
+        $pdf = \PDF::loadView('attendances.list-pdf', compact('attendances', 'date'));
+        return $pdf->download('presences-' . $date . '.pdf');
     }
 }

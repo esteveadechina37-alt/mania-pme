@@ -65,14 +65,44 @@ class LeaveRequestController extends Controller
     public function create()
     {
         $employee = $this->getEmployee();
+
+        // Vérifier si un congé approuvé est en cours
+        $today = now()->toDateString();
+        $ongoingLeave = $employee->leaveRequests()
+            ->where('status', 'approved')
+            ->where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->exists();
+
+        if ($ongoingLeave) {
+            return redirect()->route('leave-requests.index')
+                ->with('error', 'Vous êtes déjà en congé actuellement. Vous ne pouvez pas faire une nouvelle demande.');
+        }
+
         $types = LeaveType::where('company_id', $employee->company_id)->get();
         return view('leave-requests.create', compact('types'));
     }
+    // public function create()
+    // {
+    //     $employee = $this->getEmployee();
+    //     $types = LeaveType::where('company_id', $employee->company_id)->get();
+    //     return view('leave-requests.create', compact('types'));
+    // }
 
     // Soumettre une demande
     public function store(Request $request)
     {
         $employee = $this->getEmployee();
+        $today = now()->toDateString();
+        $ongoingLeave = $employee->leaveRequests()
+            ->where('status', 'approved')
+            ->where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->exists();
+
+        if ($ongoingLeave) {
+            return back()->with('error', 'Vous êtes déjà en congé actuellement. Vous ne pouvez pas soumettre une nouvelle demande.');
+        }
         $request->validate([
             'leave_type_id' => 'required|exists:leave_types,id',
             'start_date'    => 'required|date|after_or_equal:today',
