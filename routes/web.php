@@ -47,6 +47,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('employees', \App\Http\Controllers\Admin\EmployeeController::class);
     Route::resource('departments', \App\Http\Controllers\Admin\DepartmentController::class);
     Route::resource('leave-types', \App\Http\Controllers\Admin\LeaveTypeController::class);
+    Route::resource('payslips', \App\Http\Controllers\Admin\PayslipController::class)->except(['edit', 'update', 'show']);
+    Route::get('/payslips/{payslip}/download', [\App\Http\Controllers\Admin\PayslipController::class, 'download'])->name('payslips.download');
 });
 
 // Pour managers et admins : validation
@@ -60,6 +62,8 @@ Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
     Route::get('/leave-requests', [LeaveRequestController::class, 'index'])->name('leave-requests.index');
     Route::get('/leave-requests/create', [LeaveRequestController::class, 'create'])->name('leave-requests.create');
     Route::post('/leave-requests', [LeaveRequestController::class, 'store'])->name('leave-requests.store');
+    Route::get('/my-payslips', [App\Http\Controllers\Employee\PayslipController::class, 'index'])->name('employee.payslips.index');
+    Route::get('/my-payslips/{payslip}/download', [App\Http\Controllers\Employee\PayslipController::class, 'download'])->name('employee.payslips.download');
 });
 
 // Pour le détail d'une demande : employés, stagiaires ET managers (validation)

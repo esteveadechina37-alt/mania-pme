@@ -322,7 +322,9 @@
                 <a href="{{ route('attendances.list') }}" class="{{ request()->routeIs('attendances.list') ? 'active' : '' }}">
                     <i class="fas fa-clock"></i> Présences
                 </a>
-                <a href="#"><i class="fas fa-money-bill-wave"></i> Paie</a>
+                <a href="{{ route('admin.payslips.index') }}" class="{{ request()->routeIs('admin.payslips.*') ? 'active' : '' }}">
+                    <i class="fas fa-money-bill-wave"></i> Paie
+                </a>
                 <a href="#"><i class="fas fa-file-alt"></i> Documents</a>
             </div>
             @endrole
@@ -364,7 +366,9 @@
                     <i class="fas fa-history"></i> Historique
                 </a>
                 <!-- <a href="#"><i class="fas fa-calendar-plus"></i> Demande de congé</a> -->
-                <a href="#"><i class="fas fa-file-invoice"></i> Mes fiches de paie</a>
+                <a href="{{ route('employee.payslips.index') }}" class="{{ request()->routeIs('employee.payslips.*') ? 'active' : '' }}">
+                    <i class="fas fa-file-invoice"></i> 
+                    Mes bulletins</a> 
             </div>
             @endrole
 

@@ -77,8 +77,9 @@ class DashboardController extends Controller
         $heuresPointees = $totalHours;
 
         // Dernière fiche de paie (simulée)
-        $derniereFicheDate = 'Avril 2026';
-
+        // $derniereFicheDate = 'Avril 2026';
+        $latestPayslip = $employee->payslips()->latest()->first();
+        $derniereFicheDate = $latestPayslip ? $latestPayslip->month . ' ' . $latestPayslip->year : 'Aucune';
         // Demandes récentes
         $demandesRecentes = $employee->leaveRequests()
             ->with('leaveType')
