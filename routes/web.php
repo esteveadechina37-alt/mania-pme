@@ -15,6 +15,9 @@ Route::get('/tarifs', function () { return view('pages.tarifs'); });
 Route::get('/a-propos', function () { return view('pages.a-propos'); });
 Route::get('/contact', function () { return view('pages.contact'); });
 
+Route::get('/payslips/verify/{hash}', [App\Http\Controllers\PayslipVerificationController::class, 'show'])
+    ->name('payslips.verify');
+
 // Routes Auth (Breeze)
 require __DIR__.'/auth.php';
 

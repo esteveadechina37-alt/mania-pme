@@ -7,6 +7,8 @@ use App\Models\Employee;
 use App\Models\Payslip;
 use Barryvdh\DomPDF\Facade\Pdf as DomPDF;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PayslipController extends Controller
 {
@@ -44,7 +46,6 @@ class PayslipController extends Controller
 
         $employee = Employee::findOrFail($request->employee_id);
 
-        // Vérifier qu'il n'y a pas déjà un bulletin pour ce mois / employé
         $exists = Payslip::where('employee_id', $employee->id)
             ->where('month', $request->month)
             ->where('year', $request->year)
@@ -59,33 +60,24 @@ class PayslipController extends Controller
         $deductions = $request->deductions ?? 0;
         $netSalary = $baseSalary + $bonuses - $deductions;
 
-        // Génération du PDF
-        $pdfPath = $this->generatePdf($employee, $baseSalary, $bonuses, $deductions, $netSalary, $request->month, $request->year);
+        $hash = Str::random(32);
+        $pdfPath = $this->generatePdf($employee, $baseSalary, $bonuses, $deductions, $netSalary, $request->month, $request->year, $hash);
 
         Payslip::create([
-            'employee_id' => $employee->id,
-            'company_id'  => auth()->user()->company_id,
-            'month'       => $request->month,
-            'year'        => $request->year,
-            'base_salary' => $baseSalary,
-            'bonuses'     => $bonuses,
-            'deductions'  => $deductions,
-            'net_salary'  => $netSalary,
-            'pdf_path'    => $pdfPath,
+            'employee_id'      => $employee->id,
+            'company_id'       => auth()->user()->company_id,
+            'month'            => $request->month,
+            'year'             => $request->year,
+            'base_salary'      => $baseSalary,
+            'bonuses'          => $bonuses,
+            'deductions'       => $deductions,
+            'net_salary'       => $netSalary,
+            'pdf_path'         => $pdfPath,
+            'verification_hash'=> $hash,
         ]);
 
         return redirect()->route('admin.payslips.index')->with('success', 'Bulletin généré.');
     }
-
-    // public function download(Payslip $payslip)
-    // {
-    //     $filePath = storage_path('app/' . $payslip->pdf_path);
-    //     if (!file_exists($filePath)) {
-    //         return back()->with('error', 'Le fichier PDF est introuvable.');
-    //     }
-
-    //     return response()->download($filePath);
-    // }
 
     public function download(Payslip $payslip)
     {
@@ -95,50 +87,105 @@ class PayslipController extends Controller
 
         return \Storage::download($payslip->pdf_path);
     }
-    
+
     public function destroy(Payslip $payslip)
     {
-        // Supprimer le fichier PDF du serveur
-        $filePath = storage_path('app/' . $payslip->pdf_path);
-        if (file_exists($filePath)) {
-            unlink($filePath);
+        if (\Storage::exists($payslip->pdf_path)) {
+            \Storage::delete($payslip->pdf_path);
         }
-
         $payslip->delete();
         return redirect()->route('admin.payslips.index')->with('success', 'Bulletin supprimé.');
     }
 
-    /**
-     * Génère le PDF du bulletin de paie et retourne le chemin de stockage.
-     */
-    private function generatePdf(Employee $employee, $baseSalary, $bonuses, $deductions, $netSalary, $month, $year)
-    {
-        $months = [
-            '01' => 'Janvier', '02' => 'Février', '03' => 'Mars', '04' => 'Avril',
-            '05' => 'Mai', '06' => 'Juin', '07' => 'Juillet', '08' => 'Août',
-            '09' => 'Septembre', '10' => 'Octobre', '11' => 'Novembre', '12' => 'Décembre'
-        ];
 
-        $data = [
-            'employee'    => $employee->load('user', 'company'),
-            'base_salary' => $baseSalary,
-            'bonuses'     => $bonuses,
-            'deductions'  => $deductions,
-            'net_salary'  => $netSalary,
-            'month'       => $months[$month] ?? $month,
-            'year'        => $year,
-        ];
+    private function generatePdf(Employee $employee, $baseSalary, $bonuses, $deductions, $netSalary, $month, $year, $hash)
+{
+    $months = [
+        '01' => 'Janvier', '02' => 'Février', '03' => 'Mars', '04' => 'Avril',
+        '05' => 'Mai', '06' => 'Juin', '07' => 'Juillet', '08' => 'Août',
+        '09' => 'Septembre', '10' => 'Octobre', '11' => 'Novembre', '12' => 'Décembre'
+    ];
 
-        $pdf = DomPDF::loadView('admin.payslips.pdf', $data);
+    $verificationUrl = route('payslips.verify', ['hash' => $hash]);
 
-        $directory = 'payslips/' . $employee->company_id;
-        $filename  = $directory . '/bulletin_' . $employee->id . '_' . $year . '_' . $month . '.pdf';
+    // ✅ Générer en PNG puis encoder en base64
+    $qrCodeSvg = QrCode::format('svg')
+                   ->size(150)
+                   ->margin(2)
+                   ->generate($verificationUrl);
 
-        \Storage::makeDirectory($directory);
+    $qrCodeBase64 = base64_encode($qrCodeSvg);
+    // $qrCodePng = QrCode::format('png')
+    //                    ->size(150)
+    //                    ->margin(2)
+    //                    ->generate($verificationUrl);
 
-        // Enregistrer le PDF dans le stockage
-        \Storage::put($filename, $pdf->output());
+    // $qrCodeBase64 = base64_encode($qrCodePng);
 
-        return $filename;
-    }
+    $data = [
+        'employee'    => $employee->load('user', 'company'),
+        'base_salary' => $baseSalary,
+        'bonuses'     => $bonuses,
+        'deductions'  => $deductions,
+        'net_salary'  => $netSalary,
+        'month'       => $months[$month] ?? $month,
+        'year'        => $year,
+        'qrCode'      => $qrCodeBase64, // ✅ base64 pur, sans préfixe
+    ];
+
+    $pdf = DomPDF::loadView('admin.payslips.pdf', $data);
+
+    // ✅ Activer le support des images distantes/base64
+    $pdf->getDomPDF()->set_option('isRemoteEnabled', true);
+
+    $directory = 'payslips/' . $employee->company_id;
+    $filename  = $directory . '/bulletin_' . $employee->id . '_' . $year . '_' . $month . '.pdf';
+
+    \Storage::makeDirectory($directory);
+    \Storage::put($filename, $pdf->output());
+
+    return $filename;
+}
+
+    // private function generatePdf(Employee $employee, $baseSalary, $bonuses, $deductions, $netSalary, $month, $year, $hash)
+    // {
+    //     $months = [
+    //         '01' => 'Janvier', '02' => 'Février', '03' => 'Mars', '04' => 'Avril',
+    //         '05' => 'Mai', '06' => 'Juin', '07' => 'Juillet', '08' => 'Août',
+    //         '09' => 'Septembre', '10' => 'Octobre', '11' => 'Novembre', '12' => 'Décembre'
+    //     ];
+
+    //     $verificationUrl = route('payslips.verify', ['hash' => $hash]);
+
+    //     // Générer le QR code en SVG (compatible DomPDF)
+    //     // $qrCodeSvg = QrCode::format('svg')
+    //     //                    ->size(120)
+    //     //                    ->margin(2)
+    //     //                    ->generate($verificationUrl);
+    //     // Générer le QR code en PNG, puis l'encoder en base64 pour l'afficher dans le PDF
+    //     $qrCodeSvg = QrCode::format('svg')
+    //                ->size(150)
+    //                ->margin(2)
+    //                ->generate($verificationUrl);
+    //     $data = [
+    //         'employee'    => $employee->load('user', 'company'),
+    //         'base_salary' => $baseSalary,
+    //         'bonuses'     => $bonuses,
+    //         'deductions'  => $deductions,
+    //         'net_salary'  => $netSalary,
+    //         'month'       => $months[$month] ?? $month,
+    //         'year'        => $year,
+    //         'qrCode' => $qrCodeSvg,
+    //     ];
+
+    //     $pdf = DomPDF::loadView('admin.payslips.pdf', $data);
+
+    //     $directory = 'payslips/' . $employee->company_id;
+    //     $filename  = $directory . '/bulletin_' . $employee->id . '_' . $year . '_' . $month . '.pdf';
+
+    //     \Storage::makeDirectory($directory);
+    //     \Storage::put($filename, $pdf->output());
+
+    //     return $filename;
+    // }
 }

@@ -9,8 +9,31 @@
         th { background-color: #FF6200; color: white; }
         .header { text-align: center; margin-bottom: 30px; }
         .header h1 { color: #FF6200; }
-        .details { margin-bottom: 20px; }
         .details p { margin: 5px 0; }
+
+        /* Layout côte à côte */
+        .details-wrapper {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .details-wrapper td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
+        }
+        .details-cell {
+            width: 70%;
+        }
+        .qr-cell {
+            width: 30%;
+            text-align: center;
+        }
+        .qr-cell p {
+            font-size: 9px;
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -19,11 +42,20 @@
         <p>{{ $month }} {{ $year }}</p>
     </div>
 
-    <div class="details">
-        <p><strong>Entreprise :</strong> {{ $employee->company->name }}</p>
-        <p><strong>Employé :</strong> {{ $employee->user->name }}</p>
-        <p><strong>Poste :</strong> {{ $employee->position ?? 'Non défini' }}</p>
-    </div>
+    {{-- Bloc détails + QR code côte à côte --}}
+    <table class="details-wrapper">
+        <tr>
+            <td class="details-cell">
+                <p><strong>Entreprise :</strong> {{ $employee->company->name }}</p>
+                <p><strong>Employé :</strong> {{ $employee->user->name }}</p>
+                <p><strong>Poste :</strong> {{ $employee->position ?? 'Non défini' }}</p>
+            </td>
+            <td class="qr-cell">
+                <img src="data:image/svg+xml;base64,{{ $qrCode }}" width="120" height="120" alt="QR Code">
+                <p>Scannez pour vérifier<br>l'authenticité du bulletin.</p>
+            </td>
+        </tr>
+    </table>
 
     <table>
         <tr>

@@ -19,6 +19,7 @@ class Payslip extends Model
         'deductions',
         'net_salary',
         'pdf_path',
+        'verification_hash',
     ];
 
     public function employee()
