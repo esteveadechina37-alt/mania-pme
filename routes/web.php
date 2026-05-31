@@ -18,6 +18,9 @@ Route::get('/contact', function () { return view('pages.contact'); });
 Route::get('/payslips/verify/{hash}', [App\Http\Controllers\PayslipVerificationController::class, 'show'])
     ->name('payslips.verify');
 
+Route::get('/documents/verify/{hash}', [App\Http\Controllers\DocumentVerificationController::class, 'show'])
+    ->name('documents.verify');
+
 // Routes Auth (Breeze)
 require __DIR__.'/auth.php';
 
@@ -91,6 +94,19 @@ Route::middleware(['auth', 'role:manager,admin'])->group(function () {
 });
 
 
+// Documents RH (Admin)
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('documents', \App\Http\Controllers\Admin\DocumentController::class)->except(['edit', 'update']);
+    Route::get('/documents/attestation/create', [\App\Http\Controllers\Admin\DocumentController::class, 'createAttestation'])->name('documents.attestation.create');
+    Route::post('/documents/attestation', [\App\Http\Controllers\Admin\DocumentController::class, 'storeAttestation'])->name('documents.attestation.store');
+    Route::get('/documents/{document}/download', [\App\Http\Controllers\Admin\DocumentController::class, 'download'])->name('documents.download');
+});
+
+// Documents pour l'employé/stagiaire
+Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
+    Route::get('/my-documents', [\App\Http\Controllers\Employee\DocumentController::class, 'index'])->name('employee.documents.index');
+    Route::get('/my-documents/{document}/download', [\App\Http\Controllers\Employee\DocumentController::class, 'download'])->name('employee.documents.download');
+});
 
 // // Pour managers et admins : validation
 // Route::middleware(['auth', 'role:manager,admin'])->group(function () {

@@ -325,7 +325,9 @@
                 <a href="{{ route('admin.payslips.index') }}" class="{{ request()->routeIs('admin.payslips.*') ? 'active' : '' }}">
                     <i class="fas fa-money-bill-wave"></i> Paie
                 </a>
-                <a href="#"><i class="fas fa-file-alt"></i> Documents</a>
+                <a href="{{ route('admin.documents.index') }}" class="{{ request()->routeIs('admin.documents.*') ? 'active' : '' }}">
+                    <i class="fas fa-file-alt"></i> Documents
+                </a>
             </div>
             @endrole
 
@@ -369,6 +371,8 @@
                 <a href="{{ route('employee.payslips.index') }}" class="{{ request()->routeIs('employee.payslips.*') ? 'active' : '' }}">
                     <i class="fas fa-file-invoice"></i> 
                     Mes bulletins</a> 
+                <a href="{{ route('employee.documents.index') }}" class="{{ request()->routeIs('employee.documents.index') ? 'active' : '' }}">
+                    <i class="fas fa-file-alt"></i> Mes documents</a>
             </div>
             @endrole
 
@@ -391,7 +395,9 @@
                 <a href="{{ route('attendances.history') }}" class="{{ request()->routeIs('attendances.history') ? 'active' : '' }}">
                     <i class="fas fa-history"></i> Historique
                 </a>
-                <a href="#"><i class="fas fa-file-signature"></i> Attestations</a>
+                <a href="{{ route('employee.documents.index') }}" class="{{ request()->routeIs('employee.documents.index') ? 'active' : '' }}">
+                    <i class="fas fa-file-signature"></i> Attestations
+                </a>
             </div>
             @endrole
 

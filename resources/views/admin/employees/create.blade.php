@@ -407,9 +407,17 @@
                         <label class="form-label"><i class="fas fa-money-bill-wave" style="color:var(--primary);"></i> Salaire mensuel</label>
                         <input type="number" name="salary" class="form-input" value="{{ old('salary') }}" placeholder="0" step="0.01">
                     </div>
+                    <!-- <div>
+                        <label class="form-label"><i class="fas fa-calendar-alt" style="color:var(--primary);"></i> Date d'embauche</label>
+                        <input type="date" name="hire_date" class="form-input" value="{{ old('hire_date') }}">
+                    </div> -->
                     <div>
                         <label class="form-label"><i class="fas fa-calendar-alt" style="color:var(--primary);"></i> Date d'embauche</label>
                         <input type="date" name="hire_date" class="form-input" value="{{ old('hire_date') }}">
+                    </div>
+                    <div>
+                        <label class="form-label"><i class="fas fa-calendar-times" style="color:var(--primary);"></i> Fin de contrat</label>
+                        <input type="date" name="contract_end_date" class="form-input" value="{{ old('contract_end_date') }}">
                     </div>
                 </div>
             </div>

@@ -148,6 +148,7 @@ class EmployeeController extends Controller
             'contract_type' => 'nullable|string',
             'salary' => 'nullable|numeric',
             'hire_date' => 'nullable|date',
+            'contract_end_date' => 'nullable|date',
             'role' => 'required|in:manager,employe,stagiaire',
         ]);
 
@@ -170,6 +171,7 @@ class EmployeeController extends Controller
         $employee->contract_type = $request->contract_type;
         $employee->salary = $request->salary;
         $employee->hire_date = $request->hire_date;
+        $employee->contract_end_date = $request->contract_end_date;
         $employee->save();
 
         return redirect()->route('admin.employees.index')
@@ -218,6 +220,7 @@ class EmployeeController extends Controller
             'contract_type' => 'nullable|string',
             'salary' => 'nullable|numeric',
             'hire_date' => 'nullable|date',
+            'contract_end_date' => 'nullable|date',
             'status' => 'required|in:active,suspended,terminated',
             'role' => 'required|in:manager,employe,stagiaire',
         ]);
@@ -237,6 +240,7 @@ class EmployeeController extends Controller
             'contract_type' => $request->contract_type,
             'salary' => $request->salary,
             'hire_date' => $request->hire_date,
+            'contract_end_date' => $request->contract_end_date,
             'status' => $request->status
         ]);
 
