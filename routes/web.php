@@ -38,6 +38,7 @@ Route::middleware(['auth', 'role:manager'])
     ->name('manager.')
     ->group(function () {
         Route::get('/dashboard', [ManagerDashboard::class, 'index'])->name('dashboard');
+        Route::get('/team', [App\Http\Controllers\Manager\TeamController::class, 'index'])->name('team'); 
     });
 
 // Routes Employé & Stagiaire
@@ -46,6 +47,9 @@ Route::middleware(['auth', 'role:employe,stagiaire'])
     ->name('employee.')
     ->group(function () {
         Route::get('/dashboard', [EmployeeDashboard::class, 'index'])->name('dashboard');
+        Route::get('/profile', [\App\Http\Controllers\Employee\ProfileController::class, 'index'])->name('profile');
+        // Route::post('/profile/avatar', [\App\Http\Controllers\Employee\ProfileController::class, 'updateAvatar'])->name('profile.avatar');
+        Route::get('/internship', [\App\Http\Controllers\Employee\InternshipController::class, 'index'])->name('internship');
     });
 
 // Routes pour la gestion des départements (Admin uniquement)
@@ -55,6 +59,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('leave-types', \App\Http\Controllers\Admin\LeaveTypeController::class);
     Route::resource('payslips', \App\Http\Controllers\Admin\PayslipController::class)->except(['edit', 'update', 'show']);
     Route::get('/payslips/{payslip}/download', [\App\Http\Controllers\Admin\PayslipController::class, 'download'])->name('payslips.download');
+});
+
+// Évaluations (Admin & Manager)
+Route::middleware(['auth', 'role:admin,manager'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('evaluations', \App\Http\Controllers\Admin\EvaluationController::class)->except(['edit', 'update']);
 });
 
 // Pour managers et admins : validation
@@ -107,6 +116,32 @@ Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
     Route::get('/my-documents', [\App\Http\Controllers\Employee\DocumentController::class, 'index'])->name('employee.documents.index');
     Route::get('/my-documents/{document}/download', [\App\Http\Controllers\Employee\DocumentController::class, 'download'])->name('employee.documents.download');
 });
+
+// Évaluations (employé/stagiaire)
+Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
+    Route::get('/my-evaluations', [\App\Http\Controllers\Employee\EvaluationController::class, 'index'])->name('employee.evaluations.index');
+    Route::get('/my-evaluations/{evaluation}', [\App\Http\Controllers\Employee\EvaluationController::class, 'show'])->name('employee.evaluations.show');
+});
+
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/settings', [\App\Http\Controllers\Admin\CompanySettingsController::class, 'edit'])->name('settings.edit');
+    Route::put('/settings', [\App\Http\Controllers\Admin\CompanySettingsController::class, 'update'])->name('settings.update');
+});
+
+
+// Notifications (tous les utilisateurs authentifiés)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+});
+
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/account/settings', [\App\Http\Controllers\UserSettingsController::class, 'edit'])->name('user.settings.edit');
+    Route::put('/account/settings', [\App\Http\Controllers\UserSettingsController::class, 'update'])->name('user.settings.update');
+});
+
+
 
 // // Pour managers et admins : validation
 // Route::middleware(['auth', 'role:manager,admin'])->group(function () {

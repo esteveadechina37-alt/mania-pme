@@ -284,6 +284,52 @@
     function getLocation(callback) {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    callback(position.coords.latitude, position.coords.longitude);
+                },
+                function(error) {
+                    alert('Erreur de géolocalisation : ' + error.message);
+                    callback(null, null);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            alert('La géolocalisation n\'est pas supportée par ce navigateur.');
+            callback(null, null);
+        }
+    }
+
+    document.querySelectorAll('form[action*="check"] button[type="submit"]').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('form');
+            getLocation(function(lat, lng) {
+                if (lat !== null && lng !== null) {
+                    let latInput = document.createElement('input');
+                    latInput.type = 'hidden';
+                    latInput.name = 'latitude';
+                    latInput.value = lat;
+                    form.appendChild(latInput);
+                    
+                    let lngInput = document.createElement('input');
+                    lngInput.type = 'hidden';
+                    lngInput.name = 'longitude';
+                    lngInput.value = lng;
+                    form.appendChild(lngInput);
+                    
+                    form.submit();
+                } else {
+                    alert('Impossible d\'obtenir votre position. Veuillez autoriser la géolocalisation.');
+                }
+            });
+        });
+    });
+</script>
+
+<!-- <script>
+    function getLocation(callback) {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
                 position => callback(position.coords.latitude, position.coords.longitude),
                 error => callback(null, null, error.message)
             );
@@ -318,5 +364,5 @@
             });
         });
     });
-</script>
+</script> -->
 @endsection

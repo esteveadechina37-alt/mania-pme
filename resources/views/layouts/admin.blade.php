@@ -322,6 +322,9 @@
                 <a href="{{ route('attendances.list') }}" class="{{ request()->routeIs('attendances.list') ? 'active' : '' }}">
                     <i class="fas fa-clock"></i> Présences
                 </a>
+                <a href="{{ route('admin.evaluations.index') }}" class="{{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}">
+                    <i class="fas fa-star"></i> Évaluations
+                </a>
                 <a href="{{ route('admin.payslips.index') }}" class="{{ request()->routeIs('admin.payslips.*') ? 'active' : '' }}">
                     <i class="fas fa-money-bill-wave"></i> Paie
                 </a>
@@ -329,6 +332,15 @@
                     <i class="fas fa-file-alt"></i> Documents
                 </a>
             </div>
+
+            <!-- <div class="nav-section"> -->
+                <!-- <div class="nav-title">Ressources</div>
+                <a href="#"><i class="fas fa-question-circle"></i> Aide</a>
+
+                <a href="{{ route('admin.settings.edit') }}" class="{{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+                    <i class="fas fa-cog"></i> Paramètres
+                </a> -->
+            <!-- </div> -->
             @endrole
 
             @role('manager')
@@ -337,7 +349,12 @@
                 <a href="{{ route('manager.dashboard') }}" class="{{ request()->routeIs('manager.dashboard') ? 'active' : '' }}">
                     <i class="fas fa-th-large"></i> Tableau de bord
                 </a>
-                <a href="#"><i class="fas fa-user-friends"></i> Mon équipe</a>
+                <a href="{{ route('manager.team') }}" class="{{ request()->routeIs('manager.team') ? 'active' : '' }}">
+                    <i class="fas fa-user-friends"></i> Mon équipe
+                </a>
+                <a href="{{ route('admin.evaluations.index') }}" class="{{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}">
+                    <i class="fas fa-star"></i> Evaluations
+                </a>
                 <a href="{{ route('leave-requests.pending') }}" class="{{ request()->routeIs('leave-requests.pending') ? 'active' : '' }}">
                     <i class="fas fa-calendar-check"></i> Validation congés
                 </a>
@@ -346,6 +363,12 @@
                 </a>
                 <!-- <a href="#"><i class="fas fa-calendar-check"></i> Validation congés</a> -->
             </div>
+
+              <!-- <div class="nav-section">
+                <div class="nav-title">Ressources</div>
+                <a href="#"><i class="fas fa-question-circle"></i> Aide</a>
+                <a href="#"><i class="fas fa-cog"></i> Paramètres</a>
+            </div> -->
             @endrole
 
             @role('employe')
@@ -354,7 +377,9 @@
                 <a href="{{ route('employee.dashboard') }}" class="{{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
                     <i class="fas fa-th-large"></i> Tableau de bord
                 </a>
-                <a href="#"><i class="fas fa-user"></i> Mon profil</a>
+                <a href="{{ route('employee.profile') }}" class="{{ request()->routeIs('employee.profile') ? 'active' : '' }}">
+                    <i class="fas fa-user"></i> Mon profil
+                </a>
                 <a href="{{ route('leave-requests.create') }}" class="{{ request()->routeIs('leave-requests.create') ? 'active' : '' }}">
                     <i class="fas fa-calendar-plus"></i> Demande de congé
                 </a>
@@ -371,9 +396,18 @@
                 <a href="{{ route('employee.payslips.index') }}" class="{{ request()->routeIs('employee.payslips.*') ? 'active' : '' }}">
                     <i class="fas fa-file-invoice"></i> 
                     Mes bulletins</a> 
+                <a href="{{ route('employee.evaluations.index') }}" class="{{ request()->routeIs('employee.evaluations.*') ? 'active' : '' }}">
+                    <i class="fas fa-star"></i> Mes évaluations
+                </a>
                 <a href="{{ route('employee.documents.index') }}" class="{{ request()->routeIs('employee.documents.index') ? 'active' : '' }}">
                     <i class="fas fa-file-alt"></i> Mes documents</a>
             </div>
+
+              <!-- <div class="nav-section">
+                <div class="nav-title">Ressources</div>
+                <a href="#"><i class="fas fa-question-circle"></i> Aide</a>
+                <a href="#"><i class="fas fa-cog"></i> Paramètres</a>
+            </div> -->
             @endrole
 
             @role('stagiaire')
@@ -382,7 +416,9 @@
                 <a href="{{ route('employee.dashboard') }}" class="{{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
                     <i class="fas fa-th-large"></i> Tableau de bord
                 </a>
-                <a href="#"><i class="fas fa-user-graduate"></i> Mon stage</a>
+                <a href="{{ route('employee.internship') }}" class="{{ request()->routeIs('employee.internship') ? 'active' : '' }}">
+                    <i class="fas fa-user-graduate"></i> Mon stage
+                </a>
                 <a href="{{ route('leave-requests.create') }}" class="{{ request()->routeIs('leave-requests.create') ? 'active' : '' }}">
                     <i class="fas fa-calendar-plus"></i> Demande de congé
                 </a>
@@ -398,13 +434,35 @@
                 <a href="{{ route('employee.documents.index') }}" class="{{ request()->routeIs('employee.documents.index') ? 'active' : '' }}">
                     <i class="fas fa-file-signature"></i> Attestations
                 </a>
+                <a href="{{ route('employee.evaluations.index') }}" class="{{ request()->routeIs('employee.evaluations.*') ? 'active' : '' }}">
+                    <i class="fas fa-star"></i> Mes évaluations
+                </a>
             </div>
+
+              <!-- <div class="nav-section">
+                <div class="nav-title">Ressources</div>
+                <a href="#"><i class="fas fa-question-circle"></i> Aide</a>
+                <a href="#"><i class="fas fa-cog"></i> Paramètres</a>
+            </div> -->
             @endrole
+
+            <!-- <div class="nav-section">
+                <div class="nav-title">Ressources</div>
+                <a href="#"><i class="fas fa-question-circle"></i> Aide</a>
+                <a href="#"><i class="fas fa-cog"></i> Paramètres</a>
+            </div> -->
 
             <div class="nav-section">
                 <div class="nav-title">Ressources</div>
                 <a href="#"><i class="fas fa-question-circle"></i> Aide</a>
-                <a href="#"><i class="fas fa-cog"></i> Paramètres</a>
+                <a href="{{ route('user.settings.edit') }}" class="{{ request()->routeIs('user.settings.edit') ? 'active' : '' }}">
+                    <i class="fas fa-user-cog"></i> Mon compte
+                </a>
+                @role('admin')
+                    <a href="{{ route('admin.settings.edit') }}" class="{{ request()->routeIs('admin.settings.edit') ? 'active' : '' }}">
+                        <i class="fas fa-building"></i> Entreprise
+                    </a>
+                @endrole
             </div>
         </nav>
 
@@ -428,6 +486,64 @@
             <span>{{ auth()->user()->company->name ?? 'Mania-PME' }}</span>
         </div>
         <div class="topbar-right">
+            {{-- Cloche de notifications --}}
+        @php
+            $unreadCount = \App\Models\Notification::where('user_id', auth()->id())
+                            ->whereNull('read_at')
+                            ->count();
+            $latestNotifications = \App\Models\Notification::where('user_id', auth()->id())
+                                    ->latest()
+                                    ->take(5)
+                                    ->get();
+        @endphp
+
+        <div class="notification-bell" style="position: relative; margin-right: 16px; cursor: pointer;" onclick="toggleNotifications()">
+            <i class="fas fa-bell" style="font-size: 18px; color: var(--gray-600);"></i>
+            @if($unreadCount > 0)
+                <span style="position: absolute; top: -6px; right: -8px; background: #EF4444; color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;">
+                    {{ $unreadCount > 9 ? '9+' : $unreadCount }}
+                </span>
+            @endif
+
+            {{-- Panneau déroulant --}}
+            <div id="notifPanel" class="notif-panel" style="display: none; position: absolute; top: 40px; right: 0; width: 320px; max-height: 400px; overflow-y: auto; background: white; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); border: 1px solid var(--gray-200); z-index: 1001;">
+                <div style="padding: 16px; border-bottom: 1px solid var(--gray-100); font-weight: 600; color: var(--dark);">
+                    Notifications
+                </div>
+                @forelse($latestNotifications as $notif)
+                    <div style="padding: 12px 16px; border-bottom: 1px solid var(--gray-50); {{ is_null($notif->read_at) ? 'background: var(--primary-light);' : '' }}">
+                        <p style="margin: 0; font-size: 13px; font-weight: 600;">{{ $notif->title }}</p>
+                        <p style="margin: 4px 0 0; font-size: 12px; color: var(--gray-600);">{{ \Illuminate\Support\Str::limit($notif->message, 60) }}</p>
+                        <small style="color: var(--gray-400);">{{ $notif->created_at->diffForHumans() }}</small>
+                    </div>
+                @empty
+                    <div style="padding: 20px; text-align: center; color: var(--gray-600);">
+                        Aucune notification.
+                    </div>
+                @endforelse
+                @if($latestNotifications->isNotEmpty())
+                    <div style="padding: 12px 16px; text-align: center; border-top: 1px solid var(--gray-100);">
+                        <a href="{{ route('notifications.index') }}" style="color: var(--primary); font-weight: 600; text-decoration: none;">Voir toutes mes notifications</a>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <script>
+            function toggleNotifications() {
+                var panel = document.getElementById('notifPanel');
+                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            }
+
+            // Fermer le panneau si clic en dehors
+            document.addEventListener('click', function(e) {
+                var bell = document.querySelector('.notification-bell');
+                var panel = document.getElementById('notifPanel');
+                if (!bell.contains(e.target)) {
+                    panel.style.display = 'none';
+                }
+            });
+        </script>
             <div class="topbar-avatar">
                 {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
             </div>

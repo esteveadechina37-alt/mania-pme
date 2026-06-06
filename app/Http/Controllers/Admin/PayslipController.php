@@ -9,6 +9,8 @@ use Barryvdh\DomPDF\Facade\Pdf as DomPDF;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use App\Mail\RhNotificationMail;
+use Illuminate\Support\Facades\Mail;
 
 class PayslipController extends Controller
 {
@@ -75,6 +77,26 @@ class PayslipController extends Controller
             'pdf_path'         => $pdfPath,
             'verification_hash'=> $hash,
         ]);
+
+        $employee = $payslip->employee;
+        $user = $employee->user;
+
+        $title = 'Nouveau bulletin de paie disponible';
+        $message = "Votre bulletin de paie pour {$payslip->month}/{$payslip->year} est disponible dans votre espace.";
+
+        \App\Models\Notification::create([
+            'user_id'    => $user->id,
+            'company_id' => $user->company_id,
+            'type'       => 'payslip_available',
+            'title'      => $title,
+            'message'    => $message,
+        ]);
+
+        try {
+            Mail::to($user->email)->send(new RhNotificationMail($title, $message, $user->name));
+        } catch (\Exception $e) {
+            \Log::error("Erreur envoi mail : " . $e->getMessage());
+        }
 
         return redirect()->route('admin.payslips.index')->with('success', 'Bulletin généré.');
     }

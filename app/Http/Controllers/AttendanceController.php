@@ -65,6 +65,22 @@ class AttendanceController extends Controller
         $now = now()->toTimeString();
 
         // Vérification de la géolocalisation si l'entreprise a défini une zone
+        // if ($company->latitude && $company->longitude) {
+        //     $request->validate([
+        //         'latitude'  => 'required|numeric',
+        //         'longitude' => 'required|numeric',
+        //     ]);
+
+        //     $distance = $this->haversine(
+        //         $company->latitude, $company->longitude,
+        //         $request->latitude, $request->longitude
+        //     );
+
+        //     if ($distance > $company->geofence_radius) {
+        //         return back()->with('error', 'Vous êtes trop loin du lieu de travail pour pointer.');
+        //     }
+        // }
+        // Vérification de la géolocalisation si l'entreprise a défini une zone
         if ($company->latitude && $company->longitude) {
             $request->validate([
                 'latitude'  => 'required|numeric',
@@ -76,8 +92,13 @@ class AttendanceController extends Controller
                 $request->latitude, $request->longitude
             );
 
+            // Enregistrer dans les logs pour déboguer
+            \Log::info('Pointage - Distance calculée : ' . round($distance) . ' m / Autorisé : ' . $company->geofence_radius . ' m');
+            \Log::info('Coordonnées employé : ' . $request->latitude . ', ' . $request->longitude);
+            \Log::info('Coordonnées entreprise : ' . $company->latitude . ', ' . $company->longitude);
+
             if ($distance > $company->geofence_radius) {
-                return back()->with('error', 'Vous êtes trop loin du lieu de travail pour pointer.');
+                return back()->with('error', 'Vous êtes trop loin (distance : ' . round($distance) . ' m, autorisé : ' . $company->geofence_radius . ' m).');
             }
         }
 
@@ -153,6 +174,22 @@ class AttendanceController extends Controller
         $now = now()->toTimeString();
 
         // Vérification de la géolocalisation si l'entreprise a défini une zone
+        // if ($company->latitude && $company->longitude) {
+        //     $request->validate([
+        //         'latitude'  => 'required|numeric',
+        //         'longitude' => 'required|numeric',
+        //     ]);
+
+        //     $distance = $this->haversine(
+        //         $company->latitude, $company->longitude,
+        //         $request->latitude, $request->longitude
+        //     );
+
+        //     if ($distance > $company->geofence_radius) {
+        //         return back()->with('error', 'Vous êtes trop loin du lieu de travail pour pointer votre départ.');
+        //     }
+        // }
+        // Vérification de la géolocalisation si l'entreprise a défini une zone
         if ($company->latitude && $company->longitude) {
             $request->validate([
                 'latitude'  => 'required|numeric',
@@ -164,8 +201,13 @@ class AttendanceController extends Controller
                 $request->latitude, $request->longitude
             );
 
+            // Enregistrer dans les logs pour déboguer
+            \Log::info('Pointage - Distance calculée : ' . round($distance) . ' m / Autorisé : ' . $company->geofence_radius . ' m');
+            \Log::info('Coordonnées employé : ' . $request->latitude . ', ' . $request->longitude);
+            \Log::info('Coordonnées entreprise : ' . $company->latitude . ', ' . $company->longitude);
+
             if ($distance > $company->geofence_radius) {
-                return back()->with('error', 'Vous êtes trop loin du lieu de travail pour pointer votre départ.');
+                return back()->with('error', 'Vous êtes trop loin (distance : ' . round($distance) . ' m, autorisé : ' . $company->geofence_radius . ' m).');
             }
         }
 

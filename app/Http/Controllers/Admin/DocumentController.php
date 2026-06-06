@@ -9,6 +9,8 @@ use Barryvdh\DomPDF\Facade\Pdf as DomPDF;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use App\Mail\RhNotificationMail;
+use Illuminate\Support\Facades\Mail;
 
 class DocumentController extends Controller
 {
@@ -100,6 +102,26 @@ class DocumentController extends Controller
             'file_path'        => $pdfPath,
             'verification_hash'=> $hash,
         ]);
+
+        $employee = Employee::findOrFail($request->employee_id);
+        $user = $employee->user;
+
+        $title = 'Nouvelle attestation disponible';
+        $message = "Une attestation (" . ($request->type == 'work' ? 'de travail' : 'de stage') . ") a été générée et est disponible dans votre espace documents.";
+
+        \App\Models\Notification::create([
+            'user_id'    => $user->id,
+            'company_id' => $user->company_id,
+            'type'       => 'attestation_generated',
+            'title'      => $title,
+            'message'    => $message,
+        ]);
+
+        try {
+            Mail::to($user->email)->send(new RhNotificationMail($title, $message, $user->name));
+        } catch (\Exception $e) {
+            \Log::error("Erreur envoi mail attestation : " . $e->getMessage());
+        }
 
         return redirect()->route('admin.documents.index')->with('success', 'Attestation générée.');
     }
