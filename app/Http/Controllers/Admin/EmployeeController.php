@@ -307,4 +307,33 @@ class EmployeeController extends Controller
             abort(403, 'Non autorisé.');
         }
     }
+
+    public function search(Request $request)
+    {
+        $query = $request->query('query');
+        if (!$query || strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $companyId = auth()->user()->company_id;
+        $employees = Employee::where('company_id', $companyId)
+            ->where('status', 'active')
+            ->whereNull('deleted_at')
+            ->whereHas('user', function ($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%");
+            })
+            ->with('user', 'department')
+            ->take(8)
+            ->get()
+            ->map(function ($emp) {
+                return [
+                    'id'         => $emp->id,
+                    'name'       => $emp->user->name,
+                    'position'   => $emp->position,
+                    'department' => $emp->department?->name,
+                ];
+            });
+
+        return response()->json($employees);
+    }
 }

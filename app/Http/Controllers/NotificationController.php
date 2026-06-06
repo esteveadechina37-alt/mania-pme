@@ -26,4 +26,13 @@ class NotificationController extends Controller
         $notification->update(['read_at' => now()]);
         return back()->with('success', 'Notification marquée comme lue.');
     }
+
+    public function destroy(Notification $notification)
+    {
+        if ($notification->user_id !== Auth::id()) {
+            abort(403);
+        }
+        $notification->delete();
+        return back()->with('success', 'Notification supprimée.');
+    }
 }

@@ -30,7 +30,9 @@ Route::middleware(['auth', 'role:admin,super-admin'])
     ->name('admin.')
     ->group(function () {
         Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
-    });
+        Route::get('/employees/search', [\App\Http\Controllers\Admin\EmployeeController::class, 'search'])->name('admin.employees.search');
+        Route::get('/contracts', [\App\Http\Controllers\Admin\ContractController::class, 'index'])->name('contracts.index');   
+ });
 
 // Routes Manager
 Route::middleware(['auth', 'role:manager'])
@@ -139,6 +141,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/account/settings', [\App\Http\Controllers\UserSettingsController::class, 'edit'])->name('user.settings.edit');
     Route::put('/account/settings', [\App\Http\Controllers\UserSettingsController::class, 'update'])->name('user.settings.update');
+    Route::delete('/notifications/{notification}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
 });
 
 

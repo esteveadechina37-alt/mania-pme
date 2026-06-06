@@ -331,6 +331,9 @@
                 <a href="{{ route('admin.documents.index') }}" class="{{ request()->routeIs('admin.documents.*') ? 'active' : '' }}">
                     <i class="fas fa-file-alt"></i> Documents
                 </a>
+                <a href="{{ route('admin.contracts.index') }}" class="{{ request()->routeIs('admin.contracts.*') ? 'active' : '' }}">
+                    <i class="fas fa-file-contract"></i> Contrats
+                </a>
             </div>
 
             <!-- <div class="nav-section"> -->
@@ -544,6 +547,64 @@
                 }
             });
         </script>
+
+        @role('admin|super-admin')
+        <div class="employee-search" style="position: relative; margin-right: 16px;">
+            <input type="text" id="employeeSearchInput" placeholder="Rechercher un employé..." 
+                style="padding: 8px 14px; border: 1px solid var(--gray-200); border-radius: var(--radius-full); 
+                        font-size: 13px; width: 220px; outline: none; background: var(--white); 
+                        color: var(--dark); font-family: 'Cabinet Grotesk', sans-serif;"
+                autocomplete="off">
+            <div id="employeeSearchResults" style="display: none; position: absolute; top: 44px; left: 0; width: 320px; 
+                        background: white; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); 
+                        border: 1px solid var(--gray-200); z-index: 1002; max-height: 300px; overflow-y: auto;"></div>
+        </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('employeeSearchInput');
+            const resultsDiv = document.getElementById('employeeSearchResults');
+            let debounceTimer;
+
+            if (!input) return;
+
+            input.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                const query = this.value.trim();
+                if (query.length < 2) {
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+                debounceTimer = setTimeout(() => {
+                    fetch(`/admin/employees/search?query=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(employees => {
+                            if (employees.length === 0) {
+                                resultsDiv.innerHTML = '<div style="padding:12px; color:var(--gray-600);">Aucun employé trouvé.</div>';
+                            } else {
+                                resultsDiv.innerHTML = employees.map(emp => 
+                                    `<a href="/admin/employees/${emp.id}" style="display:flex; align-items:center; gap:12px; padding:10px 14px; text-decoration:none; color:var(--dark); border-bottom:1px solid var(--gray-100);">
+                                        <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, var(--primary), var(--primary-hover)); color:white; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">${emp.name.charAt(0).toUpperCase()}</div>
+                                        <div>
+                                            <div style="font-weight:600;">${emp.name}</div>
+                                            <div style="font-size:12px; color:var(--gray-600);">${emp.position || 'Sans poste'} · ${emp.department || '—'}</div>
+                                        </div>
+                                    </a>`
+                                ).join('');
+                            }
+                            resultsDiv.style.display = 'block';
+                        });
+                }, 300);
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target) && !resultsDiv.contains(e.target)) {
+                    resultsDiv.style.display = 'none';
+                }
+            });
+        });
+        </script>
+        @endrole
             <div class="topbar-avatar">
                 {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
             </div>

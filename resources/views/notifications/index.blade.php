@@ -71,12 +71,21 @@
             <div class="notification-message">{{ $notif->message }}</div>
             <div class="notification-time">{{ $notif->created_at->diffForHumans() }}</div>
         </div>
-        @if(is_null($notif->read_at))
-            <form method="POST" action="{{ route('notifications.mark-read', $notif) }}">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            @if(is_null($notif->read_at))
+                <form method="POST" action="{{ route('notifications.mark-read', $notif) }}">
+                    @csrf
+                    <button type="submit" class="mark-read-btn"><i class="fas fa-check"></i> Lue</button>
+                </form>
+            @endif
+            <form method="POST" action="{{ route('notifications.destroy', $notif) }}" onsubmit="return confirm('Supprimer cette notification ?');">
                 @csrf
-                <button type="submit" class="mark-read-btn"><i class="fas fa-check"></i> Marquer lue</button>
+                @method('DELETE')
+                <button type="submit" style="background: transparent; border: none; color: #EF4444; cursor: pointer; font-size: 14px;" title="Supprimer">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
             </form>
-        @endif
+        </div>
     </div>
 @empty
     <div class="empty-state">
