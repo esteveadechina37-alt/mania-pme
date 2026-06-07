@@ -20,24 +20,49 @@ class DepartmentController extends Controller
         }
     }
 
+    // public function index()
+    // {
+    //     $companyId = auth()->user()->company_id;
+    //     // $departments = Department::where('company_id', $companyId)
+    //     //                 ->with('manager')
+    //     //                 ->withCount('employees')
+    //     //                 ->paginate(15);
+    //     $departments = Department::where('company_id', $companyId)
+    //             ->with('manager')
+    //             ->withCount(['employees' => function ($query) {
+    //                 $query->where('status', 'active')
+    //                       ->whereNull('deleted_at');
+    //             }])
+    //             ->paginate(15);
+
+    //     return view('admin.departments.index', compact('departments'));
+    // }
+
     public function index()
     {
         $companyId = auth()->user()->company_id;
-        // $departments = Department::where('company_id', $companyId)
-        //                 ->with('manager')
-        //                 ->withCount('employees')
-        //                 ->paginate(15);
+
         $departments = Department::where('company_id', $companyId)
-                ->with('manager')
-                ->withCount(['employees' => function ($query) {
-                    $query->where('status', 'active')
-                          ->whereNull('deleted_at');
-                }])
-                ->paginate(15);
+                        ->with('manager')
+                        ->withCount(['employees' => function ($query) {
+                            $query->where('status', 'active')->whereNull('deleted_at');
+                        }])
+                        ->paginate(15);
 
-        return view('admin.departments.index', compact('departments'));
+        // KPI
+        $totalDepartments = Department::where('company_id', $companyId)->count();
+        $totalEmployees   = Employee::where('company_id', $companyId)->whereNull('deleted_at')->count();
+        $activeEmployees  = Employee::where('company_id', $companyId)->where('status', 'active')->whereNull('deleted_at')->count();
+        $managedDepts     = Department::where('company_id', $companyId)->whereNotNull('manager_id')->count();
+
+        return view('admin.departments.index', compact(
+            'departments',
+            'totalDepartments',
+            'totalEmployees',
+            'activeEmployees',
+            'managedDepts'
+        ));
     }
-
     public function create()
     {
         // Récupère les managers possibles (utilisateurs ayant le rôle manager dans la même boîte)

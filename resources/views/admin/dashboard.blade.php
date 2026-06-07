@@ -52,7 +52,7 @@
     }
 
     /* HEADER */
-    .dash-header {
+    /* .dash-header {
         display: flex; align-items: center; justify-content: space-between;
         flex-wrap: wrap; gap: 12px;
     }
@@ -69,7 +69,111 @@
         border-radius: var(--radius-full); font-size: 12px; font-weight: 600;
         display: flex; align-items: center; gap: 8px; white-space: nowrap;
     }
-    .live-dot { width:7px; height:7px; background:#10B981; border-radius:50%; }
+    .live-dot { width:7px; height:7px; background:#10B981; border-radius:50%; } */
+
+      /* ===== HEADER AMÉLIORÉ ===== */
+        .dash-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 20px 24px;
+            background: var(--white);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            position: relative;
+            overflow: hidden;
+        }
+        .dash-header::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            right: -30px;
+            width: 120px;
+            height: 120px;
+            background: var(--primary-glow);
+            filter: blur(60px);
+            z-index: 0;
+        }
+        .dash-header > * {
+            position: relative;
+            z-index: 1;
+        }
+        .welcome-block {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .avatar-admin {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 700;
+            box-shadow: 0 8px 16px rgba(255,98,0,0.3);
+            flex-shrink: 0;
+        }
+        .dash-title {
+            font-family: 'Clash Display', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark);
+            line-height: 1.2;
+        }
+        .dash-title span {
+            background: linear-gradient(135deg, var(--primary) 0%, #FF3D00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .dash-subtitle {
+            color: var(--gray-600);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .stats-inline {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .stat-mini {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--dark);
+            background: var(--gray-50);
+            padding: 8px 14px;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--gray-200);
+        }
+        .stat-mini i {
+            color: var(--primary);
+            font-size: 15px;
+        }
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            background: #10B981;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+            animation: livePulse 2s infinite;
+        }
+        @keyframes livePulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.6); opacity: 0.4; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
 
     /* KPI BENTO (4 cartes) */
     .kpi-grid {
@@ -181,10 +285,35 @@
 
 <div class="dashboard">
     {{-- Header --}}
-    <div class="dash-header animate-in">
+        <div class="dash-header animate-in">
+        <div class="welcome-block">
+            <div class="avatar-admin">
+                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+            </div>
+            <div>
+                <h1 class="dash-title">Bienvenue, <span>{{ auth()->user()->name }}</span></h1>
+                <p class="dash-subtitle">
+                    <span class="live-dot"></span>
+                    {{ auth()->user()->company->name ?? 'Mania-PME' }}
+                    · {{ now()->isoFormat('dddd D MMMM YYYY') }}
+                </p>
+            </div>
+        </div>
+        <div class="stats-inline">
+            <div class="stat-mini">
+                <i class="fas fa-user-check"></i>
+                <span>{{ $activeEmployees }} actifs</span>
+            </div>
+            <div class="stat-mini">
+                <i class="fas fa-bell"></i>
+                <span>{{ $notifications->whereNull('read_at')->count() }} non lues</span>
+            </div>
+        </div>
+    </div>
+    <!-- <div class="dash-header animate-in">
         <h1 class="dash-title">Bienvenue, <span>{{ auth()->user()->name }}</span></h1>
         <div class="tenant-badge"><span class="live-dot"></span> {{ auth()->user()->company->name ?? 'Mania-PME' }}</div>
-    </div>
+    </div> -->
 
     {{-- 4 KPI Cards --}}
     <div class="kpi-grid">
@@ -297,6 +426,7 @@
     </div>
 
     {{-- Liens rapides --}}
+    <h3 class="card-title" style="margin-bottom: -1rem;"><i class="fas fa-bolt"></i> Action Rapide</h3>
     <div class="quick-links animate-in delay-4">
         <a href="{{ route('admin.employees.index') }}" class="quick-link">
             <div class="ql-icon"><i class="fas fa-users"></i></div>

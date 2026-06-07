@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AttendanceController extends Controller
 {
@@ -267,34 +268,94 @@ class AttendanceController extends Controller
     /**
      * Liste des présences pour le manager (son département) ou l'admin (toute l'entreprise).
      */
-    public function list(Request $request)
-    {
-        $user = Auth::user();
-        $companyId = $user->company_id;
-        $date = $request->date ?: now()->toDateString(); // date sélectionnée ou aujourd'hui
+  public function list(Request $request)
+{
+    $user = auth()->user();
+    $companyId = $user->company_id;
+    $date = $request->date ?: now()->toDateString();
 
-        if ($user->hasRole('admin')) {
-            $attendances = Attendance::where('company_id', $companyId)
-                            ->where('date', $date)
-                            ->with('employee.user')
-                            ->paginate(15);
-        } elseif ($user->hasRole('manager')) {
-            $department = \App\Models\Department::where('manager_id', $user->id)->first();
-            if ($department) {
-                $employeeIds = $department->employees()->pluck('id');
-                $attendances = Attendance::whereIn('employee_id', $employeeIds)
-                                ->where('date', $date)
-                                ->with('employee.user')
-                                ->paginate(15);
-            } else {
-                $attendances = collect([]);
-            }
+    // Fonction de filtrage pour exclure les managers
+    $baseQuery = function ($query) {
+        $query->where('status', 'active')
+              ->whereNull('deleted_at')
+              ->whereHas('user', function ($q) {
+                  $q->whereDoesntHave('roles', function ($r) {
+                      $r->where('name', 'manager');
+                  });
+              })
+              ->with('user');
+    };
+
+    // Récupérer les employés actifs (hors managers)
+    if ($user->hasRole('admin')) {
+        $allEmployees = \App\Models\Employee::where('company_id', $companyId)
+                        ->where($baseQuery)
+                        ->get();
+    } elseif ($user->hasRole('manager')) {
+        $department = \App\Models\Department::where('manager_id', $user->id)->first();
+        if ($department) {
+            $allEmployees = $department->employees()
+                            ->where($baseQuery)
+                            ->get();
         } else {
-            abort(403);
+            $allEmployees = collect([]);
         }
-
-        return view('attendances.list', compact('attendances', 'date'));
+    } else {
+        abort(403);
     }
+
+    $employeeIds = $allEmployees->pluck('id');
+
+    // Tous les pointages du jour pour les KPIs (non paginé)
+    $allAttendances = Attendance::whereIn('employee_id', $employeeIds)
+                        ->where('date', $date)
+                        ->get();
+
+    // Pointages paginés pour l'affichage
+    $attendances = Attendance::whereIn('employee_id', $employeeIds)
+                    ->where('date', $date)
+                    ->with('employee.user')
+                    ->paginate(15);
+
+    // KPIs dynamiques (retard = présent)
+    $totalEmployees = $allEmployees->count();
+    $present        = $allAttendances->whereIn('status', ['present', 'late'])->count();
+    $late           = $allAttendances->where('status', 'late')->count();
+    $absent         = $totalEmployees - $present;
+    $rate           = $totalEmployees > 0 ? round(($present / $totalEmployees) * 100) : 0;
+
+    return view('attendances.list', compact(
+        'attendances', 'date', 'present', 'late', 'absent', 'rate'
+    ));
+}
+    // public function list(Request $request)
+    // {
+    //     $user = Auth::user();
+    //     $companyId = $user->company_id;
+    //     $date = $request->date ?: now()->toDateString(); // date sélectionnée ou aujourd'hui
+
+    //     if ($user->hasRole('admin')) {
+    //         $attendances = Attendance::where('company_id', $companyId)
+    //                         ->where('date', $date)
+    //                         ->with('employee.user')
+    //                         ->paginate(15);
+    //     } elseif ($user->hasRole('manager')) {
+    //         $department = \App\Models\Department::where('manager_id', $user->id)->first();
+    //         if ($department) {
+    //             $employeeIds = $department->employees()->pluck('id');
+    //             $attendances = Attendance::whereIn('employee_id', $employeeIds)
+    //                             ->where('date', $date)
+    //                             ->with('employee.user')
+    //                             ->paginate(15);
+    //         } else {
+    //             $attendances = collect([]);
+    //         }
+    //     } else {
+    //         abort(403);
+    //     }
+
+    //     return view('attendances.list', compact('attendances', 'date'));
+    // }
     // public function list()
     // {
     //     $user = Auth::user();
@@ -361,45 +422,119 @@ class AttendanceController extends Controller
         return view('attendances.weekly', compact('attendances', 'startOfWeek', 'endOfWeek', 'totalLate', 'totalPresent'));
     }
 
-        public function exportPdf()
-    {
-        $employee = $this->getEmployee();
-        $attendances = Attendance::where('employee_id', $employee->id)
-                        ->orderBy('date', 'desc')
+   public function exportListPdf(Request $request)
+{
+    $user = Auth::user();
+    $companyId = $user->company_id;
+    $date = $request->date ?: now()->toDateString();
+
+    // Récupération de l'entreprise pour son nom
+    $company = $user->company;
+
+    // 1. Récupérer les employés actifs selon le rôle, en excluant les managers
+    $baseQuery = function ($query) {
+        $query->where('status', 'active')
+              ->whereNull('deleted_at')
+              ->whereHas('user', function ($q) {
+                  // Exclut les utilisateurs qui ont le rôle "manager"
+                  $q->whereDoesntHave('roles', function ($r) {
+                      $r->where('name', 'manager');
+                  });
+              })
+              ->with('user', 'department');
+    };
+
+    if ($user->hasRole('admin')) {
+        $allEmployees = \App\Models\Employee::where('company_id', $companyId)
+                        ->where($baseQuery)
+                        ->get();
+    } elseif ($user->hasRole('manager')) {
+        $department = \App\Models\Department::where('manager_id', $user->id)->first();
+        if ($department) {
+            $allEmployees = $department->employees()
+                            ->where($baseQuery)
+                            ->get();
+        } else {
+            $allEmployees = collect([]);
+        }
+    } else {
+        abort(403);
+    }
+
+    $employeeIds = $allEmployees->pluck('id');
+
+    // 2. TOUS les pointages du jour (non paginé)
+    $allAttendances = Attendance::whereIn('employee_id', $employeeIds)
+                        ->where('date', $date)
+                        ->with('employee.user', 'employee.department')
                         ->get();
 
-        $pdf = \PDF::loadView('attendances.pdf', compact('attendances', 'employee'));
-        return $pdf->download('pointages-'.$employee->user->name.'.pdf');
-    }
+    // 3. KPIs (règle : retards = présents)
+    $totalEmployees = $allEmployees->count();
+    $present        = $allAttendances->whereIn('status', ['present', 'late'])->count();
+    $late           = $allAttendances->where('status', 'late')->count();
+    $absent         = $totalEmployees - $present;
+    $rate           = $totalEmployees > 0 ? round(($present / $totalEmployees) * 100) : 0;
 
-    //  la méthode d’export PDF pour la liste des présences (admin/manager)
-    public function exportListPdf(Request $request)
-    {
-        $user = Auth::user();
-        $companyId = $user->company_id;
-        $date = $request->date ?: now()->toDateString();
+    // 4. Pointages pour le tableau
+    $attendances = $allAttendances;
 
-        if ($user->hasRole('admin')) {
-            $attendances = Attendance::where('company_id', $companyId)
-                            ->where('date', $date)
-                            ->with('employee.user')
-                            ->get();
-        } elseif ($user->hasRole('manager')) {
-            $department = \App\Models\Department::where('manager_id', $user->id)->first();
-            if ($department) {
-                $employeeIds = $department->employees()->pluck('id');
-                $attendances = Attendance::whereIn('employee_id', $employeeIds)
-                                ->where('date', $date)
-                                ->with('employee.user')
-                                ->get();
-            } else {
-                $attendances = collect([]);
-            }
-        } else {
-            abort(403);
-        }
+    // 5. Génération du PDF
+    $pdf = \PDF::loadView('attendances.list-pdf', compact(
+        'attendances',
+        'date',
+        'present',
+        'late',
+        'absent',
+        'rate',
+        'allEmployees',   // pour la liste des absents
+        'company'         // pour le nom de l'entreprise
+    ));
 
-        $pdf = \PDF::loadView('attendances.list-pdf', compact('attendances', 'date'));
-        return $pdf->download('presences-' . $date . '.pdf');
-    }
+    $pdf->setPaper('a4', 'landscape');
+
+    return $pdf->download('presences-' . \Carbon\Carbon::parse($date)->format('Y-m-d') . '.pdf');
+}
+
+    //     public function exportPdf()
+    // {
+    //     $employee = $this->getEmployee();
+    //     $attendances = Attendance::where('employee_id', $employee->id)
+    //                     ->orderBy('date', 'desc')
+    //                     ->get();
+
+    //     $pdf = \PDF::loadView('attendances.pdf', compact('attendances', 'employee'));
+    //     return $pdf->download('pointages-'.$employee->user->name.'.pdf');
+    // }
+
+    // //  la méthode d’export PDF pour la liste des présences (admin/manager)
+    // public function exportListPdf(Request $request)
+    // {
+    //     $user = Auth::user();
+    //     $companyId = $user->company_id;
+    //     $date = $request->date ?: now()->toDateString();
+
+    //     if ($user->hasRole('admin')) {
+    //         $attendances = Attendance::where('company_id', $companyId)
+    //                         ->where('date', $date)
+    //                         ->with('employee.user')
+    //                         ->get();
+    //     } elseif ($user->hasRole('manager')) {
+    //         $department = \App\Models\Department::where('manager_id', $user->id)->first();
+    //         if ($department) {
+    //             $employeeIds = $department->employees()->pluck('id');
+    //             $attendances = Attendance::whereIn('employee_id', $employeeIds)
+    //                             ->where('date', $date)
+    //                             ->with('employee.user')
+    //                             ->get();
+    //         } else {
+    //             $attendances = collect([]);
+    //         }
+    //     } else {
+    //         abort(403);
+    //     }
+
+    //     $pdf = \PDF::loadView('attendances.list-pdf', compact('attendances', 'date'));
+    //     return $pdf->download('presences-' . $date . '.pdf');
+    // }
 }

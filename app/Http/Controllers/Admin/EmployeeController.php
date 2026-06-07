@@ -7,6 +7,7 @@ use App\Models\Employee;
 use App\Models\User;
 use App\Models\Department;
 use App\Models\LeaveRequest;
+use App\Models\Evaluation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -69,41 +70,89 @@ class EmployeeController extends Controller
     //         'departmentsCount'
     //     ));
     // }
+
     public function index()
     {
         $companyId = auth()->user()->company_id;
-        $today = now()->toDateString();
 
-        // Tous les employés non supprimés (soft delete), avec leur user et département
+        // Employés paginés
         $employees = Employee::where('company_id', $companyId)
                     ->whereNull('deleted_at')
                     ->with('user', 'department')
                     ->orderBy('status')
                     ->paginate(15);
 
-        // Statistiques dynamiques
-        $totalEmployees = Employee::where('company_id', $companyId)->count(); // tous, sauf soft-deleted
+        // Statistiques KPI
+        $totalEmployees = Employee::where('company_id', $companyId)->count();
         $activeCount    = Employee::where('company_id', $companyId)->where('status', 'active')->count();
+        $onLeaveCount   = Employee::where('company_id', $companyId)->whereHas('leaveRequests', function ($q) {
+                            $today = now()->toDateString();
+                            $q->where('status', 'approved')
+                            ->where('start_date', '<=', $today)
+                            ->where('end_date', '>=', $today);
+                        })->count();
+        $departmentsCount = Department::where('company_id', $companyId)->count();
 
-        // Employés en congé : ceux ayant une demande approuvée couvrant la date du jour
-        $onLeaveCount = Employee::where('company_id', $companyId)
-            ->whereHas('leaveRequests', function ($query) use ($today) {
-                $query->where('status', 'approved')
-                    ->where('start_date', '<=', $today)
-                    ->where('end_date', '>=', $today);
-            })
-            ->count();
-
-        $departmentsCount = \App\Models\Department::where('company_id', $companyId)->count();
+        // Top 5 employés les mieux évalués (moyenne ou dernière note)
+        $topEvaluated = Employee::where('company_id', $companyId)
+                        ->where('status', 'active')
+                        ->whereNull('deleted_at')
+                        ->with(['user', 'evaluations' => function ($q) {
+                            $q->latest('evaluated_at')->limit(1);
+                        }])
+                        ->get()
+                        ->filter(function ($emp) {
+                            return $emp->evaluations->isNotEmpty();
+                        })
+                        ->sortByDesc(function ($emp) {
+                            return $emp->evaluations->first()->score;
+                        })
+                        ->take(5);
 
         return view('admin.employees.index', compact(
             'employees',
             'totalEmployees',
             'activeCount',
             'onLeaveCount',
-            'departmentsCount'
+            'departmentsCount',
+            'topEvaluated'
         ));
     }
+    // public function index()
+    // {
+    //     $companyId = auth()->user()->company_id;
+    //     $today = now()->toDateString();
+
+    //     // Tous les employés non supprimés (soft delete), avec leur user et département
+    //     $employees = Employee::where('company_id', $companyId)
+    //                 ->whereNull('deleted_at')
+    //                 ->with('user', 'department')
+    //                 ->orderBy('status')
+    //                 ->paginate(15);
+
+    //     // Statistiques dynamiques
+    //     $totalEmployees = Employee::where('company_id', $companyId)->count(); // tous, sauf soft-deleted
+    //     $activeCount    = Employee::where('company_id', $companyId)->where('status', 'active')->count();
+
+    //     // Employés en congé : ceux ayant une demande approuvée couvrant la date du jour
+    //     $onLeaveCount = Employee::where('company_id', $companyId)
+    //         ->whereHas('leaveRequests', function ($query) use ($today) {
+    //             $query->where('status', 'approved')
+    //                 ->where('start_date', '<=', $today)
+    //                 ->where('end_date', '>=', $today);
+    //         })
+    //         ->count();
+
+    //     $departmentsCount = \App\Models\Department::where('company_id', $companyId)->count();
+
+    //     return view('admin.employees.index', compact(
+    //         'employees',
+    //         'totalEmployees',
+    //         'activeCount',
+    //         'onLeaveCount',
+    //         'departmentsCount'
+    //     ));
+    // }
 
     // public function index()
     // {
