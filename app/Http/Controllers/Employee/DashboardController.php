@@ -87,6 +87,17 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+
+         // --- Programme de la semaine (si l'employé a un département) ---
+        $currentWeekProgram = null;
+        if ($employee->department_id) {
+            $weekStart = now()->startOfWeek()->toDateString();
+            $currentWeekProgram = \App\Models\WeeklyProgram::where('department_id', $employee->department_id)
+                                    ->where('week_start', $weekStart)
+                                    ->with('objectives')
+                                    ->first();
+        }
+
         // --- Notifications de retour (si un congé s'est terminé hier) ---
         $yesterday = now()->subDay()->toDateString();
         $endedLeave = $employee->leaveRequests()
@@ -138,12 +149,21 @@ class DashboardController extends Controller
             }
         }
 
+        $recentEvaluations = \App\Models\Evaluation::where('employee_id', $employee->id)
+        ->with('evaluator')
+        ->latest()
+        ->take(3)
+        ->get();
+
         return view('employee.dashboard', compact(
             'currentLeave',
             'joursRestants',
             'derniereFicheDate',
             'heuresPointees',
-            'demandesRecentes'
+            'demandesRecentes',
+            'currentWeekProgram',
+            'employee',   // ✅ ajouté
+            'recentEvaluations'
         ));
     }
 

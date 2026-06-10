@@ -290,7 +290,7 @@
 <div class="page-header animate-in">
     <div>
         <h1 class="page-title">
-            <i class="fas fa-clock" style="color:var(--primary)"></i>
+            <i class="fas fa-clock" style="color:var(--primary)"></i> Gestion
             <span>Présences</span>
         </h1>
         <span class="date-badge">

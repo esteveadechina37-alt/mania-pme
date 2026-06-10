@@ -1,215 +1,184 @@
 @extends('layouts.admin')
 
-@section('title', 'Paramètres de l\'entreprise')
+@section('title', "Paramètres de l'entreprise")
 
 @section('content')
 <style>
-    /* ========== DESIGN SYSTEM (identique dashboard) ========== */
     :root {
         --primary: #FF6200;
         --primary-hover: #E05500;
         --primary-light: rgba(255, 98, 0, 0.08);
-        --primary-glow: rgba(255, 98, 0, 0.25);
         --dark: #0A0A0A;
         --gray-50: #F9FAFB;
         --gray-100: #F3F4F6;
         --gray-200: #E5E7EB;
-        --gray-300: #D1D5DB;
         --gray-600: #6B7280;
-        --gray-800: #1F2937;
         --white: #FFFFFF;
-        --shadow-sm: 0 2px 4px rgba(10, 10, 10, 0.02);
-        --shadow-md: 0 8px 24px rgba(10, 10, 10, 0.05);
-        --shadow-lg: 0 16px 40px rgba(255, 98, 0, 0.08);
-        --radius-sm: 8px;
-        --radius-md: 16px;
-        --radius-lg: 24px;
+        --shadow-sm: 0 2px 8px rgba(10,10,10,0.04);
+        --radius-sm: 6px;
+        --radius-md: 12px;
         --radius-full: 9999px;
-        --transition-fast: 0.15s ease;
-        --transition-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
-
     @keyframes fadeSlideUp {
-        0% { opacity: 0; transform: translateY(20px); }
+        0% { opacity: 0; transform: translateY(10px); }
         100% { opacity: 1; transform: translateY(0); }
     }
-    .animate-in {
-        animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        opacity: 0;
-    }
-    .delay-1 { animation-delay: 0.1s; }
-    .delay-2 { animation-delay: 0.2s; }
-    .delay-3 { animation-delay: 0.3s; }
+    .animate-in { animation: fadeSlideUp 0.4s ease both; }
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.1s; }
 
-    /* ========== HEADER ========== */
     .page-header {
-        display: flex; align-items: flex-start; justify-content: space-between;
-        margin-bottom: 30px; flex-wrap: wrap; gap: 20px; position: relative;
-    }
-    .page-header::after {
-        content: ''; position: absolute; top: -20px; left: 0;
-        width: 150px; height: 150px; background: var(--primary-glow);
-        filter: blur(80px); z-index: -1; pointer-events: none;
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
     }
     .page-title {
-        font-family: 'Clash Display', sans-serif; font-size: 30px; font-weight: 700; color: var(--dark);
-        margin: 0 0 6px 0; line-height: 1.2; letter-spacing: -0.02em;
+        font-size: 20px; font-weight: 700; color: var(--dark);
+        margin: 0; display: flex; align-items: center; gap: 6px;
     }
     .page-title span {
         background: linear-gradient(135deg, var(--primary) 0%, #FF3D00 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .page-subtitle { color: var(--gray-600); font-family: 'Cabinet Grotesk', sans-serif; font-size: 15px; margin: 0; }
-
     .alert-success {
-        background: #ECFDF5; border-left: 4px solid #10B981; border-radius: var(--radius-sm);
-        padding: 14px 18px; margin-bottom: 24px; color: #065F46;
-        display: flex; align-items: center; gap: 10px; font-size: 14px;
+        background: #ECFDF5; border-left: 4px solid #10B981;
+        border-radius: 6px; padding: 8px 12px; margin-bottom: 12px;
+        font-size: 12px; display: flex; align-items: center; gap: 6px; color: #065F46;
     }
-
-    /* ========== MAIN LAYOUT ========== */
     .content-grid {
-        display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;
+        display: grid; grid-template-columns: 1fr 240px;
+        gap: 12px; align-items: start;
     }
-    @media (max-width: 900px) {
-        .content-grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 800px) { .content-grid { grid-template-columns: 1fr; } }
 
-    /* ========== FORM CARD ========== */
     .form-card {
         background: var(--white); border-radius: var(--radius-md);
-        padding: 28px; box-shadow: var(--shadow-md); border: 1px solid var(--gray-200);
-        margin-bottom: 24px; transition: var(--transition-smooth);
+        padding: 14px 16px; box-shadow: var(--shadow-sm);
+        border: 1px solid var(--gray-200); margin-bottom: 10px;
     }
-    .form-card:hover { box-shadow: var(--shadow-lg); }
     .card-title {
-        font-family: 'Clash Display', sans-serif; font-size: 22px; font-weight: 700;
-        color: var(--dark); margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+        font-size: 14px; font-weight: 700; color: var(--dark);
+        margin: 0 0 10px; display: flex; align-items: center; gap: 6px;
     }
     .card-title i { color: var(--primary); }
 
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--gray-800); margin-bottom: 6px; }
-    .form-input {
-        width: 100%; padding: 10px 14px; border: 1px solid var(--gray-200);
-        border-radius: var(--radius-sm); font-size: 14px; background: var(--white);
-        color: var(--dark); font-family: 'Cabinet Grotesk', sans-serif;
-        transition: all 0.2s ease;
+    .form-group { margin-bottom: 10px; }
+    .form-label {
+        font-size: 11px; font-weight: 600; color: var(--dark);
+        margin-bottom: 3px; display: flex; align-items: center; gap: 4px;
     }
-    .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
-    .form-input[readonly] { background: var(--gray-100); color: var(--gray-600); }
+    .form-label i { color: var(--primary); font-size: 12px; }
+    .form-input {
+        width: 100%; padding: 6px 10px; border: 1px solid var(--gray-200);
+        border-radius: var(--radius-sm); font-size: 12px;
+        background: var(--white); color: var(--dark);
+        transition: 0.2s; outline: none;
+    }
+    .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+    .form-input[readonly] { background: var(--gray-50); color: var(--gray-600); }
 
     .btn-primary {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-        color: white; padding: 12px 28px; border-radius: var(--radius-full);
-        font-weight: 600; font-size: 14px; border: none; cursor: pointer;
-        display: inline-flex; align-items: center; gap: 8px;
-        box-shadow: 0 4px 12px rgba(255,98,0,0.25); transition: var(--transition-smooth);
-        text-decoration: none; font-family: 'Cabinet Grotesk', sans-serif;
+        color: white; padding: 8px 16px; border-radius: var(--radius-full);
+        font-weight: 600; font-size: 12px; border: none; cursor: pointer;
+        width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
+        box-shadow: 0 3px 8px rgba(255,98,0,0.2); transition: 0.2s;
     }
-    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 18px var(--primary-glow); }
+    .btn-primary:hover { transform: translateY(-1px); }
 
     .btn-outline {
-        background: var(--white); color: var(--dark); padding: 10px 20px;
+        background: var(--white); color: var(--dark); padding: 6px 12px;
         border-radius: var(--radius-full); border: 1px solid var(--gray-200);
-        font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 8px;
-        cursor: pointer; transition: var(--transition-smooth);
+        font-weight: 600; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;
+        cursor: pointer; transition: 0.2s;
     }
     .btn-outline:hover { background: var(--gray-50); border-color: var(--primary); }
 
-    #map { height: 320px; width: 100%; border-radius: var(--radius-sm); margin-bottom: 16px; border: 1px solid var(--gray-200); }
-    .range-wrap { display: flex; align-items: center; gap: 12px; }
+    #map { height: 220px; width: 100%; border-radius: var(--radius-sm); margin-bottom: 10px; border: 1px solid var(--gray-200); }
+    .range-wrap { display: flex; align-items: center; gap: 10px; font-size: 12px; }
     .range-wrap input[type=range] { flex: 1; accent-color: var(--primary); }
-    .range-value { font-weight: 700; color: var(--primary); min-width: 60px; text-align: right; }
+    .range-value { font-weight: 700; color: var(--primary); min-width: 50px; text-align: right; }
 
-    /* ========== GUIDE CARD ========== */
     .guide-card {
         background: var(--white); border-radius: var(--radius-md);
-        padding: 24px; box-shadow: var(--shadow-md); border: 1px solid var(--gray-200);
-        position: relative; overflow: hidden; transition: var(--transition-smooth);
+        padding: 14px; box-shadow: var(--shadow-sm);
+        border: 1px solid var(--gray-200);
+        position: sticky; top: 60px;
     }
-    .guide-card::before {
-        content: ''; position: absolute; inset: 0;
-        background: radial-gradient(circle at top right, var(--primary-light), transparent 70%);
-        opacity: 0; transition: var(--transition-smooth);
+    .guide-card h3 {
+        font-size: 13px; font-weight: 700; color: var(--dark);
+        margin: 0 0 10px; display: flex; align-items: center; gap: 6px;
     }
-    .guide-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
-    .guide-card:hover::before { opacity: 1; }
-    .guide-card .card-title {
-        font-family: 'Clash Display', sans-serif; font-size: 20px; font-weight: 700;
-        color: var(--dark); margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
-        position: relative; z-index: 1;
-    }
-    .guide-card .card-title i { color: var(--primary); }
-    .guide-item {
-        display: flex; gap: 12px; margin-bottom: 20px; position: relative; z-index: 1;
-    }
+    .guide-card h3 i { color: var(--primary); font-size: 14px; }
+    .guide-item { display: flex; gap: 6px; margin-bottom: 8px; font-size: 11px; }
+    .guide-item:last-child { margin-bottom: 0; }
     .guide-icon {
-        width: 36px; height: 36px; border-radius: var(--radius-sm);
+        width: 24px; height: 24px; border-radius: 5px;
         background: var(--primary-light); color: var(--primary);
         display: flex; align-items: center; justify-content: center;
-        font-size: 16px; flex-shrink: 0;
+        font-size: 12px; flex-shrink: 0;
     }
-    .guide-text strong {
-        font-family: 'Cabinet Grotesk', sans-serif; font-size: 15px; font-weight: 700;
-        color: var(--dark); display: block; margin-bottom: 4px;
-    }
-    .guide-text p { color: var(--gray-600); font-size: 13px; margin: 0; }
+    .guide-text strong { font-size: 12px; display: block; margin-bottom: 2px; }
+    .guide-text p { color: var(--gray-600); margin: 0; line-height: 1.3; }
 </style>
 
 <div class="page-header animate-in">
-    <div>
-        <h1 class="page-title"><i class="fas fa-building" style="color:var(--primary);"></i> <span>Paramètres de l'entreprise</span></h1>
-        <p class="page-subtitle">Définissez l'emplacement de vos locaux et le rayon de pointage autorisé</p>
-    </div>
+    <h1 class="page-title">
+        <i class="fas fa-building" style="color:var(--primary)"></i>
+        <span>Paramètres de l'entreprise</span>
+    </h1>
 </div>
 
 @if(session('success'))
-    <div class="alert-success animate-in delay-1">
-        <i class="fas fa-check-circle" style="color:#10B981; font-size:18px;"></i>
-        {{ session('success') }}
+    <div class="alert-success animate-in">
+        <i class="fas fa-check-circle"></i> {{ session('success') }}
     </div>
 @endif
 
 <div class="content-grid">
-    {{-- Colonne gauche : cartes paramètres --}}
-    <div class="animate-in delay-1">
-        {{-- Carte : Emplacement --}}
-        <div class="form-card">
-            <h3 class="card-title"><i class="fas fa-map-marker-alt"></i> Emplacement des locaux</h3>
-            <div style="margin-bottom:12px;">
-                <label class="form-label">Rechercher une adresse</label>
-                <div style="display:flex; gap:8px;">
-                    <input type="text" id="searchInput" class="form-input" placeholder="Ex: Cotonou, Bénin">
-                    <button type="button" onclick="searchAddress()" class="btn-outline">
-                        <i class="fas fa-search"></i> Chercher
-                    </button>
+    <div>
+        {{-- Carte principale (infos de l'entreprise + carte + rayon) --}}
+        <div class="form-card animate-in delay-1">
+            <h3 class="card-title"><i class="fas fa-building"></i> Informations de l'entreprise</h3>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <div class="form-group" style="flex:1; min-width:150px;">
+                    <label class="form-label"><i class="fas fa-map-marker-alt"></i> Adresse</label>
+                    <input type="text" name="address" form="settingsForm" class="form-input" 
+                           value="{{ old('address', $company->address) }}" placeholder="Rue, quartier...">
                 </div>
+                <div class="form-group" style="flex:1; min-width:120px;">
+                    <label class="form-label"><i class="fas fa-city"></i> Ville</label>
+                    <input type="text" name="city" form="settingsForm" class="form-input" 
+                           value="{{ old('city', $company->city) }}" placeholder="Ex: Cotonou">
+                </div>
+            </div>
+
+            <h3 class="card-title" style="margin-top:12px;"><i class="fas fa-map-pin"></i> Emplacement & périmètre</h3>
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <input type="text" id="searchInput" class="form-input" placeholder="Rechercher une adresse…">
+                <button type="button" onclick="searchAddress()" class="btn-outline">
+                    <i class="fas fa-search"></i> Chercher
+                </button>
             </div>
             <div id="map"></div>
             <div class="form-group">
-                <label class="form-label">Latitude</label>
-                <input type="text" id="lat" class="form-input" value="{{ old('latitude', $company->latitude) }}" readonly>
+                <label class="form-label"><i class="fas fa-crosshairs"></i> Coordonnées GPS</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="lat" class="form-input" value="{{ old('latitude', $company->latitude) }}" readonly>
+                    <input type="text" id="lng" class="form-input" value="{{ old('longitude', $company->longitude) }}" readonly>
+                </div>
             </div>
             <div class="form-group">
-                <label class="form-label">Longitude</label>
-                <input type="text" id="lng" class="form-input" value="{{ old('longitude', $company->longitude) }}" readonly>
+                <label class="form-label"><i class="fas fa-bullseye"></i> Rayon autorisé</label>
+                <div class="range-wrap">
+                    <input type="range" id="radiusSlider" min="50" max="2000" step="10"
+                           value="{{ old('geofence_radius', $company->geofence_radius ?? 200) }}"
+                           oninput="document.getElementById('radiusValue').textContent = this.value + ' m'">
+                    <span class="range-value" id="radiusValue">{{ old('geofence_radius', $company->geofence_radius ?? 200) }} m</span>
+                </div>
+                <p style="font-size:10px; color:var(--gray-600); margin-top:4px;">
+                    Distance maximale autour du marqueur pour accepter un pointage.
+                </p>
             </div>
-            <p style="font-size:12px; color:var(--gray-600);">Déplacez le marqueur sur la carte pour ajuster précisément la position.</p>
-        </div>
-
-        {{-- Carte : Rayon --}}
-        <div class="form-card">
-            <h3 class="card-title"><i class="fas fa-bullseye"></i> Rayon de pointage autorisé</h3>
-            <div class="range-wrap">
-                <input type="range" id="radiusSlider" min="50" max="2000" step="10"
-                       value="{{ old('geofence_radius', $company->geofence_radius ?? 200) }}"
-                       oninput="document.getElementById('radiusValue').textContent = this.value + ' m'">
-                <span class="range-value" id="radiusValue">{{ old('geofence_radius', $company->geofence_radius ?? 200) }} m</span>
-            </div>
-            <p style="font-size:12px; color:var(--gray-600); margin-top:8px;">
-                L'employé doit se trouver dans ce rayon autour du marqueur pour pouvoir pointer.
-            </p>
         </div>
 
         {{-- Formulaire d'enregistrement --}}
@@ -219,34 +188,34 @@
             <input type="hidden" name="latitude" id="formLat" value="{{ old('latitude', $company->latitude) }}">
             <input type="hidden" name="longitude" id="formLng" value="{{ old('longitude', $company->longitude) }}">
             <input type="hidden" name="geofence_radius" id="formRadius" value="{{ old('geofence_radius', $company->geofence_radius ?? 200) }}">
-            <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">
+            <button type="submit" class="btn-primary">
                 <i class="fas fa-save"></i> Enregistrer les paramètres
             </button>
         </form>
     </div>
 
-    {{-- Colonne droite : Guide --}}
-    <div class="guide-card animate-in delay-2" style="position: sticky; top: 100px;">
-        <h3 class="card-title"><i class="fas fa-lightbulb"></i> Guide des paramètres</h3>
+    {{-- Guide compact --}}
+    <div class="guide-card animate-in delay-2">
+        <h3><i class="fas fa-lightbulb"></i> Guide</h3>
+        <div class="guide-item">
+            <div class="guide-icon"><i class="fas fa-building"></i></div>
+            <div class="guide-text">
+                <strong>Adresse et ville</strong>
+                <p>Utilisées sur les bulletins et attestations.</p>
+            </div>
+        </div>
         <div class="guide-item">
             <div class="guide-icon"><i class="fas fa-map-marker-alt"></i></div>
             <div class="guide-text">
-                <strong>Positionnez votre entreprise</strong>
-                <p>Recherchez l'adresse ou déplacez le marqueur sur la carte pour définir l'emplacement exact de vos locaux.</p>
+                <strong>Position GPS</strong>
+                <p>Déplacez le marqueur ou cherchez une adresse.</p>
             </div>
         </div>
         <div class="guide-item">
             <div class="guide-icon"><i class="fas fa-bullseye"></i></div>
             <div class="guide-text">
-                <strong>Définissez le rayon</strong>
-                <p>Choisissez la distance maximale à laquelle un employé peut se trouver pour pointer. Plus le rayon est petit, plus le pointage est sécurisé.</p>
-            </div>
-        </div>
-        <div class="guide-item">
-            <div class="guide-icon"><i class="fas fa-save"></i></div>
-            <div class="guide-text">
-                <strong>Enregistrez</strong>
-                <p>N'oubliez pas de sauvegarder les modifications. Les paramètres prendront effet immédiatement pour tous les pointages.</p>
+                <strong>Rayon</strong>
+                <p>Pointage impossible au‑delà de cette distance.</p>
             </div>
         </div>
     </div>
@@ -268,18 +237,18 @@
     var marker = L.marker([lat, lng], { draggable: true }).addTo(map)
         .bindPopup('Position de l\'entreprise').openPopup();
 
-    marker.on('dragend', function(e) {
-        var pos = marker.getLatLng();
+    function updateCoordinates(pos) {
         document.getElementById('lat').value = pos.lat.toFixed(7);
         document.getElementById('lng').value = pos.lng.toFixed(7);
         document.getElementById('formLat').value = pos.lat.toFixed(7);
         document.getElementById('formLng').value = pos.lng.toFixed(7);
+    }
+
+    marker.on('dragend', function(e) {
+        updateCoordinates(marker.getLatLng());
     });
 
-    document.getElementById('lat').value = lat;
-    document.getElementById('lng').value = lng;
-    document.getElementById('formLat').value = lat;
-    document.getElementById('formLng').value = lng;
+    updateCoordinates(marker.getLatLng());
 
     document.getElementById('radiusSlider').addEventListener('input', function() {
         document.getElementById('formRadius').value = this.value;
@@ -297,10 +266,7 @@
                     var newLng = parseFloat(first.lon);
                     map.setView([newLat, newLng], 16);
                     marker.setLatLng([newLat, newLng]);
-                    document.getElementById('lat').value = newLat.toFixed(7);
-                    document.getElementById('lng').value = newLng.toFixed(7);
-                    document.getElementById('formLat').value = newLat.toFixed(7);
-                    document.getElementById('formLng').value = newLng.toFixed(7);
+                    updateCoordinates(marker.getLatLng());
                 } else {
                     alert('Adresse non trouvée.');
                 }

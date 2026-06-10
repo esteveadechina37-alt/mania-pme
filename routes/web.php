@@ -6,9 +6,10 @@ use App\Http\Controllers\Manager\DashboardController as ManagerDashboard;
 use App\Http\Controllers\Employee\DashboardController as EmployeeDashboard;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\Manager\WeeklyProgramController;
+use App\Http\Controllers\Employee\EmployeeObjectiveController;
 
-// Page d'accueil
-// Route::get('/', function () { return view('welcome');});
+// ===== PAGES PUBLIQUES =====
 Route::get('/', function () { return view('welcome'); });
 Route::get('/fonctionnalites', function () { return view('pages.fonctionnalites'); });
 Route::get('/tarifs', function () { return view('pages.tarifs'); });
@@ -17,78 +18,119 @@ Route::get('/contact', function () { return view('pages.contact'); });
 
 Route::get('/payslips/verify/{hash}', [App\Http\Controllers\PayslipVerificationController::class, 'show'])
     ->name('payslips.verify');
-
 Route::get('/documents/verify/{hash}', [App\Http\Controllers\DocumentVerificationController::class, 'show'])
     ->name('documents.verify');
 
-// Routes Auth (Breeze)
 require __DIR__.'/auth.php';
 
-// Routes Admin (administrateur d'entreprise)
+// ===== ADMIN =====
 Route::middleware(['auth', 'role:admin,super-admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
         Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
-        Route::get('/employees/search', [\App\Http\Controllers\Admin\EmployeeController::class, 'search'])->name('admin.employees.search');
-        Route::get('/contracts', [\App\Http\Controllers\Admin\ContractController::class, 'index'])->name('contracts.index');   
- });
 
-// Routes Manager
+        // ✅ Nom corrigé : plus de doublon "admin."
+        Route::get('/employees/search', [\App\Http\Controllers\Admin\EmployeeController::class, 'search'])
+            ->name('employees.search');
+
+        // ✅ Contrats dans le bon groupe nommé
+        Route::get('/contracts', [\App\Http\Controllers\Admin\ContractController::class, 'index'])
+            ->name('contracts.index');
+    });
+
+// ===== ADMIN (ressources) =====
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::resource('employees', \App\Http\Controllers\Admin\EmployeeController::class);
+        Route::resource('departments', \App\Http\Controllers\Admin\DepartmentController::class);
+        Route::resource('leave-types', \App\Http\Controllers\Admin\LeaveTypeController::class);
+
+        Route::resource('payslips', \App\Http\Controllers\Admin\PayslipController::class)
+            ->except(['edit', 'update', 'show']);
+        Route::get('/payslips/{payslip}/download', [\App\Http\Controllers\Admin\PayslipController::class, 'download'])
+            ->name('payslips.download');
+
+        Route::resource('documents', \App\Http\Controllers\Admin\DocumentController::class)
+            ->except(['edit', 'update']);
+        Route::get('/documents/attestation/create', [\App\Http\Controllers\Admin\DocumentController::class, 'createAttestation'])
+            ->name('documents.attestation.create');
+        Route::post('/documents/attestation', [\App\Http\Controllers\Admin\DocumentController::class, 'storeAttestation'])
+            ->name('documents.attestation.store');
+        Route::get('/documents/{document}/download', [\App\Http\Controllers\Admin\DocumentController::class, 'download'])
+            ->name('documents.download');
+
+        Route::get('/settings', [\App\Http\Controllers\Admin\CompanySettingsController::class, 'edit'])
+            ->name('settings.edit');
+        Route::put('/settings', [\App\Http\Controllers\Admin\CompanySettingsController::class, 'update'])
+            ->name('settings.update');
+    });
+
+// ===== ÉVALUATIONS (Admin & Manager) =====
+Route::middleware(['auth', 'role:admin,manager'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::resource('evaluations', \App\Http\Controllers\Admin\EvaluationController::class)
+            ->except(['edit', 'update']);
+    });
+
+// ===== MANAGER =====
 Route::middleware(['auth', 'role:manager'])
     ->prefix('manager')
     ->name('manager.')
     ->group(function () {
         Route::get('/dashboard', [ManagerDashboard::class, 'index'])->name('dashboard');
-        Route::get('/team', [App\Http\Controllers\Manager\TeamController::class, 'index'])->name('team'); 
+        Route::get('/team', [App\Http\Controllers\Manager\TeamController::class, 'index'])->name('team');
+            Route::post('/team/program', [WeeklyProgramController::class, 'storeOrUpdate'])->name('team.program.store');
+        Route::post('/team/objective/{objective}', [WeeklyProgramController::class, 'updateObjective'])->name('team.objective.update');
+        // Manager : assigner un employé à un objectif
+        Route::post('/team/objective/{objective}/assign', [WeeklyProgramController::class, 'assignEmployee'])
+            ->name('team.objective.assign');
     });
 
-// Routes Employé & Stagiaire
+// ===== EMPLOYÉ & STAGIAIRE =====
 Route::middleware(['auth', 'role:employe,stagiaire'])
     ->prefix('employee')
     ->name('employee.')
     ->group(function () {
         Route::get('/dashboard', [EmployeeDashboard::class, 'index'])->name('dashboard');
         Route::get('/profile', [\App\Http\Controllers\Employee\ProfileController::class, 'index'])->name('profile');
-        // Route::post('/profile/avatar', [\App\Http\Controllers\Employee\ProfileController::class, 'updateAvatar'])->name('profile.avatar');
         Route::get('/internship', [\App\Http\Controllers\Employee\InternshipController::class, 'index'])->name('internship');
+        // Employé : mettre à jour le statut/progression de SA tâche
+        Route::post('/my-objectives/{objective}/update', [EmployeeObjectiveController::class, 'update'])
+            ->name('objective.update');
     });
 
-// Routes pour la gestion des départements (Admin uniquement)
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::resource('employees', \App\Http\Controllers\Admin\EmployeeController::class);
-    Route::resource('departments', \App\Http\Controllers\Admin\DepartmentController::class);
-    Route::resource('leave-types', \App\Http\Controllers\Admin\LeaveTypeController::class);
-    Route::resource('payslips', \App\Http\Controllers\Admin\PayslipController::class)->except(['edit', 'update', 'show']);
-    Route::get('/payslips/{payslip}/download', [\App\Http\Controllers\Admin\PayslipController::class, 'download'])->name('payslips.download');
-});
-
-// Évaluations (Admin & Manager)
-Route::middleware(['auth', 'role:admin,manager'])->prefix('admin')->name('admin.')->group(function () {
-    Route::resource('evaluations', \App\Http\Controllers\Admin\EvaluationController::class)->except(['edit', 'update']);
-});
-
-// Pour managers et admins : validation
+// ===== CONGÉS — Validation (Manager & Admin) =====
 Route::middleware(['auth', 'role:manager,admin'])->group(function () {
-    Route::get('/leave-requests/pending', [LeaveRequestController::class, 'pending'])->name('leave-requests.pending');
-    Route::post('/leave-requests/{leaveRequest}/decide', [LeaveRequestController::class, 'decide'])->name('leave-requests.decide');
+    Route::get('/leave-requests/pending', [LeaveRequestController::class, 'pending'])
+        ->name('leave-requests.pending');
+    Route::post('/leave-requests/{leaveRequest}/decide', [LeaveRequestController::class, 'decide'])
+        ->name('leave-requests.decide');
 });
 
-// Pour employés/stagiaires UNIQUEMENT (index, create, store)
+// ===== CONGÉS — Employés/Stagiaires =====
 Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
     Route::get('/leave-requests', [LeaveRequestController::class, 'index'])->name('leave-requests.index');
     Route::get('/leave-requests/create', [LeaveRequestController::class, 'create'])->name('leave-requests.create');
     Route::post('/leave-requests', [LeaveRequestController::class, 'store'])->name('leave-requests.store');
-    Route::get('/my-payslips', [App\Http\Controllers\Employee\PayslipController::class, 'index'])->name('employee.payslips.index');
-    Route::get('/my-payslips/{payslip}/download', [App\Http\Controllers\Employee\PayslipController::class, 'download'])->name('employee.payslips.download');
+
+    Route::get('/my-payslips', [App\Http\Controllers\Employee\PayslipController::class, 'index'])
+        ->name('employee.payslips.index');
+    Route::get('/my-payslips/{payslip}/download', [App\Http\Controllers\Employee\PayslipController::class, 'download'])
+        ->name('employee.payslips.download');
 });
 
-// Pour le détail d'une demande : employés, stagiaires ET managers (validation)
+// ===== CONGÉS — Détail (Employé, Stagiaire, Manager) =====
 Route::middleware(['auth', 'role:employe,stagiaire,manager'])->group(function () {
-    Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'show'])->name('leave-requests.show');
+    Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'show'])
+        ->name('leave-requests.show');
 });
 
-// Pointage (employé/stagiaire)
+// ===== POINTAGE (Employé/Stagiaire) =====
 Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
     Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances.index');
     Route::post('/attendances/check-in', [AttendanceController::class, 'checkIn'])->name('attendances.checkin');
@@ -98,72 +140,43 @@ Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
     Route::get('/attendances/export-pdf', [AttendanceController::class, 'exportPdf'])->name('attendances.export-pdf');
 });
 
-// Consultation des présences (manager/admin)
+// ===== PRÉSENCES — Consultation (Manager/Admin) =====
 Route::middleware(['auth', 'role:manager,admin'])->group(function () {
     Route::get('/attendances/list', [AttendanceController::class, 'list'])->name('attendances.list');
-    Route::get('/attendances/export-list-pdf', [AttendanceController::class, 'exportListPdf'])->name('attendances.export-list-pdf');
+    Route::get('/attendances/export-list-pdf', [AttendanceController::class, 'exportListPdf'])
+        ->name('attendances.export-list-pdf');
 });
 
-
-// Documents RH (Admin)
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::resource('documents', \App\Http\Controllers\Admin\DocumentController::class)->except(['edit', 'update']);
-    Route::get('/documents/attestation/create', [\App\Http\Controllers\Admin\DocumentController::class, 'createAttestation'])->name('documents.attestation.create');
-    Route::post('/documents/attestation', [\App\Http\Controllers\Admin\DocumentController::class, 'storeAttestation'])->name('documents.attestation.store');
-    Route::get('/documents/{document}/download', [\App\Http\Controllers\Admin\DocumentController::class, 'download'])->name('documents.download');
-});
-
-// Documents pour l'employé/stagiaire
+// ===== DOCUMENTS — Employé/Stagiaire =====
 Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
-    Route::get('/my-documents', [\App\Http\Controllers\Employee\DocumentController::class, 'index'])->name('employee.documents.index');
-    Route::get('/my-documents/{document}/download', [\App\Http\Controllers\Employee\DocumentController::class, 'download'])->name('employee.documents.download');
+    Route::get('/my-documents', [\App\Http\Controllers\Employee\DocumentController::class, 'index'])
+        ->name('employee.documents.index');
+    Route::get('/my-documents/{document}/download', [\App\Http\Controllers\Employee\DocumentController::class, 'download'])
+        ->name('employee.documents.download');
 });
 
-// Évaluations (employé/stagiaire)
+// ===== ÉVALUATIONS — Employé/Stagiaire =====
 Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
-    Route::get('/my-evaluations', [\App\Http\Controllers\Employee\EvaluationController::class, 'index'])->name('employee.evaluations.index');
-    Route::get('/my-evaluations/{evaluation}', [\App\Http\Controllers\Employee\EvaluationController::class, 'show'])->name('employee.evaluations.show');
+    Route::get('/my-evaluations', [\App\Http\Controllers\Employee\EvaluationController::class, 'index'])
+        ->name('employee.evaluations.index');
+    Route::get('/my-evaluations/{evaluation}', [\App\Http\Controllers\Employee\EvaluationController::class, 'show'])
+        ->name('employee.evaluations.show');
 });
 
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/settings', [\App\Http\Controllers\Admin\CompanySettingsController::class, 'edit'])->name('settings.edit');
-    Route::put('/settings', [\App\Http\Controllers\Admin\CompanySettingsController::class, 'update'])->name('settings.update');
-});
-
-
-// Notifications (tous les utilisateurs authentifiés)
+// ===== NOTIFICATIONS =====
 Route::middleware(['auth'])->group(function () {
-    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])
+        ->name('notifications.index');
+    Route::post('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])
+        ->name('notifications.mark-read');
+    Route::delete('/notifications/{notification}', [\App\Http\Controllers\NotificationController::class, 'destroy'])
+        ->name('notifications.destroy');
 });
 
-
+// ===== PARAMÈTRES COMPTE =====
 Route::middleware(['auth'])->group(function () {
-    Route::get('/account/settings', [\App\Http\Controllers\UserSettingsController::class, 'edit'])->name('user.settings.edit');
-    Route::put('/account/settings', [\App\Http\Controllers\UserSettingsController::class, 'update'])->name('user.settings.update');
-    Route::delete('/notifications/{notification}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::get('/account/settings', [\App\Http\Controllers\UserSettingsController::class, 'edit'])
+        ->name('user.settings.edit');
+    Route::put('/account/settings', [\App\Http\Controllers\UserSettingsController::class, 'update'])
+        ->name('user.settings.update');
 });
-
-
-
-// // Pour managers et admins : validation
-// Route::middleware(['auth', 'role:manager,admin'])->group(function () {
-//     Route::get('/leave-requests/pending', [LeaveRequestController::class, 'pending'])->name('leave-requests.pending');
-//     Route::post('/leave-requests/{leaveRequest}/decide', [LeaveRequestController::class, 'decide'])->name('leave-requests.decide');
-// });
-
-// // Pour employés/stagiaires
-// // Pour employés/stagiaires (et aussi le manager pour voir le détail)
-// Route::middleware(['auth', 'role:employe,stagiaire,manager'])->group(function () {
-//     Route::get('/leave-requests', [LeaveRequestController::class, 'index'])->name('leave-requests.index');
-//     Route::get('/leave-requests/create', [LeaveRequestController::class, 'create'])->name('leave-requests.create');
-//     Route::post('/leave-requests', [LeaveRequestController::class, 'store'])->name('leave-requests.store');
-//     Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'show'])->name('leave-requests.show');
-// });
-// // Route::middleware(['auth', 'role:employe,stagiaire'])->group(function () {
-// //     Route::get('/leave-requests', [LeaveRequestController::class, 'index'])->name('leave-requests.index');
-// //     Route::get('/leave-requests/create', [LeaveRequestController::class, 'create'])->name('leave-requests.create');
-// //     Route::post('/leave-requests', [LeaveRequestController::class, 'store'])->name('leave-requests.store');
-// //     Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'show'])->name('leave-requests.show');
-// // });
-

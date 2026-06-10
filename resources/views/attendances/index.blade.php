@@ -216,7 +216,7 @@
 
 <div class="page-header animate-in">
     <div>
-        <h1 class="page-title"><i class="fas fa-user-check" style="color:var(--primary);"></i> <span>Pointage</span></h1>
+        <h1 class="page-title"><i class="fas fa-user-check" style="color:var(--primary);"></i> Pointage</h1>
         <p class="page-subtitle">Enregistrez votre arrivée et votre départ quotidiens</p>
     </div>
 </div>

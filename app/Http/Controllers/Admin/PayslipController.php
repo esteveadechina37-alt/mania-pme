@@ -11,20 +11,87 @@ use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Mail\RhNotificationMail;
 use Illuminate\Support\Facades\Mail;
+use Carbon\Carbon;
+
 
 class PayslipController extends Controller
 {
-    public function index()
-    {
-        $companyId = auth()->user()->company_id;
-        $payslips = Payslip::where('company_id', $companyId)
-                    ->with('employee.user')
-                    ->orderBy('year', 'desc')
-                    ->orderBy('month', 'desc')
-                    ->paginate(15);
 
-        return view('admin.payslips.index', compact('payslips'));
+public function index(Request $request)
+    {
+        $user      = auth()->user();
+        $companyId = $user->company_id;
+
+        // ✅ Table de correspondance numéro → nom français
+        // (identique à ce que generatePdf() stocke en base)
+        $monthsFr = [
+            '01' => 'Janvier',  '02' => 'Février',   '03' => 'Mars',
+            '04' => 'Avril',    '05' => 'Mai',        '06' => 'Juin',
+            '07' => 'Juillet',  '08' => 'Août',       '09' => 'Septembre',
+            '10' => 'Octobre',  '11' => 'Novembre',   '12' => 'Décembre',
+        ];
+
+        // Requête de base
+        $baseQuery = Payslip::where('company_id', $companyId)
+                            ->with('employee.user');
+
+        // ✅ Filtre employé
+        if ($request->filled('employee_id')) {
+            $baseQuery->where('employee_id', $request->employee_id);
+        }
+
+        // ✅ Filtre période — on décompose "2026-06" en année + mois français
+        if ($request->filled('period')) {
+    try {
+        [$year, $monthNumber] = explode('-', $request->period);
+        if (isset($monthsFr[$monthNumber]) && is_numeric($year)) {
+            // On filtre sur le numéro (ex: "06")
+            $baseQuery->where('year', $year)
+                      ->where('month', $monthNumber);
+        }
+    } catch (\Exception $e) {
+        // format invalide
     }
+}
+
+        // Pagination
+        $payslips = (clone $baseQuery)
+                        ->orderBy('created_at', 'desc')
+                        ->paginate(10)
+                        ->appends($request->all());
+
+        // ✅ KPIs — on clone AVANT la pagination pour avoir les totaux exacts
+        $totalPayslips         = (clone $baseQuery)->count();
+        $totalNetSalary        = (clone $baseQuery)->sum('net_salary');
+        $lastPayslip           = (clone $baseQuery)->orderBy('created_at', 'desc')->first();
+        $filteredEmployeesCount = (clone $baseQuery)->distinct('employee_id')->count('employee_id');
+
+        // Employés actifs de l'entreprise pour le select de filtre
+        $employees = Employee::where('company_id', $companyId)
+                            ->where('status', 'active')
+                            ->with('user')
+                            ->get();
+
+        return view('admin.payslips.index', compact(
+            'payslips',
+            'totalPayslips',
+            'totalNetSalary',
+            'lastPayslip',
+            'filteredEmployeesCount',
+            'employees'
+        ));
+    }
+    // public function index()
+    // {
+    //     $companyId = auth()->user()->company_id;
+    //     $payslips = Payslip::where('company_id', $companyId)
+    //                 ->with('employee.user')
+    //                 ->orderBy('year', 'desc')
+    //                 ->orderBy('month', 'desc')
+    //                 ->paginate(15);
+
+    //     return view('admin.payslips.index', compact('payslips'));
+    // }
 
     public function create()
     {
@@ -37,69 +104,71 @@ class PayslipController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'employee_id' => 'required|exists:employees,id',
-            'month'       => 'required|digits:2',
-            'year'        => 'required|digits:4',
-            'bonuses'     => 'nullable|numeric|min:0',
-            'deductions'  => 'nullable|numeric|min:0',
-        ]);
+{
+    $request->validate([
+        'employee_id' => 'required|exists:employees,id',
+        'month'       => 'required|digits:2',
+        'year'        => 'required|digits:4',
+        'bonuses'     => 'nullable|numeric|min:0',
+        'deductions'  => 'nullable|numeric|min:0',
+    ]);
 
-        $employee = Employee::findOrFail($request->employee_id);
+    $employee = Employee::findOrFail($request->employee_id);
 
-        $exists = Payslip::where('employee_id', $employee->id)
-            ->where('month', $request->month)
-            ->where('year', $request->year)
-            ->exists();
+    // Vérifier l'existence d'un bulletin pour la même période
+    $exists = Payslip::where('employee_id', $employee->id)
+        ->where('month', $request->month)
+        ->where('year', $request->year)
+        ->exists();
 
-        if ($exists) {
-            return back()->with('error', 'Un bulletin existe déjà pour cet employé sur cette période.');
-        }
-
-        $baseSalary = $employee->salary;
-        $bonuses = $request->bonuses ?? 0;
-        $deductions = $request->deductions ?? 0;
-        $netSalary = $baseSalary + $bonuses - $deductions;
-
-        $hash = Str::random(32);
-        $pdfPath = $this->generatePdf($employee, $baseSalary, $bonuses, $deductions, $netSalary, $request->month, $request->year, $hash);
-
-        Payslip::create([
-            'employee_id'      => $employee->id,
-            'company_id'       => auth()->user()->company_id,
-            'month'            => $request->month,
-            'year'             => $request->year,
-            'base_salary'      => $baseSalary,
-            'bonuses'          => $bonuses,
-            'deductions'       => $deductions,
-            'net_salary'       => $netSalary,
-            'pdf_path'         => $pdfPath,
-            'verification_hash'=> $hash,
-        ]);
-
-        $employee = $payslip->employee;
-        $user = $employee->user;
-
-        $title = 'Nouveau bulletin de paie disponible';
-        $message = "Votre bulletin de paie pour {$payslip->month}/{$payslip->year} est disponible dans votre espace.";
-
-        \App\Models\Notification::create([
-            'user_id'    => $user->id,
-            'company_id' => $user->company_id,
-            'type'       => 'payslip_available',
-            'title'      => $title,
-            'message'    => $message,
-        ]);
-
-        try {
-            Mail::to($user->email)->send(new RhNotificationMail($title, $message, $user->name));
-        } catch (\Exception $e) {
-            \Log::error("Erreur envoi mail : " . $e->getMessage());
-        }
-
-        return redirect()->route('admin.payslips.index')->with('success', 'Bulletin généré.');
+    if ($exists) {
+        return back()->with('error', 'Un bulletin existe déjà pour cet employé sur cette période.');
     }
+
+    $baseSalary = $employee->salary;
+    $bonuses = $request->bonuses ?? 0;
+    $deductions = $request->deductions ?? 0;
+    $netSalary = $baseSalary + $bonuses - $deductions;
+
+    // Générer le hash de vérification et le PDF
+    $hash = Str::random(32);
+    $pdfPath = $this->generatePdf($employee, $baseSalary, $bonuses, $deductions, $netSalary, $request->month, $request->year, $hash);
+
+    // Créer le bulletin et le stocker dans $payslip
+    $payslip = Payslip::create([
+        'employee_id'      => $employee->id,
+        'company_id'       => auth()->user()->company_id,
+        'month'            => $request->month,
+        'year'             => $request->year,
+        'base_salary'      => $baseSalary,
+        'bonuses'          => $bonuses,
+        'deductions'       => $deductions,
+        'net_salary'       => $netSalary,
+        'pdf_path'         => $pdfPath,
+        'verification_hash'=> $hash,
+    ]);
+
+    // Préparer la notification pour l'employé
+    $notifiedUser = $employee->user; // utilisateur lié à l'employé
+    $title = 'Nouveau bulletin de paie disponible';
+    $message = "Votre bulletin de paie pour {$payslip->month}/{$payslip->year} est disponible dans votre espace.";
+
+    \App\Models\Notification::create([
+        'user_id'    => $notifiedUser->id,
+        'company_id' => $notifiedUser->company_id,
+        'type'       => 'payslip_available',
+        'title'      => $title,
+        'message'    => $message,
+    ]);
+
+    try {
+        Mail::to($notifiedUser->email)->send(new RhNotificationMail($title, $message, $notifiedUser->name));
+    } catch (\Exception $e) {
+        \Log::error("Erreur envoi mail : " . $e->getMessage());
+    }
+
+    return redirect()->route('admin.payslips.index')->with('success', 'Bulletin généré.');
+}
 
     public function download(Payslip $payslip)
     {

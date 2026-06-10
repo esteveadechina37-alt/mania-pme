@@ -55,17 +55,77 @@ class LeaveRequestController extends Controller
     }
 
     // Liste des demandes de l'utilisateur connecté (employé/stagiaire)
-    public function index()
-    {
-        $employee = $this->getEmployee();
-        $requests = LeaveRequest::where('employee_id', $employee->id)
-                    ->with('leaveType', 'approver')
-                    ->latest()
-                    ->paginate(10);
-        return view('leave-requests.index', compact('requests'));
+    // public function index()
+    // {
+    //     $employee = $this->getEmployee();
+    //     $requests = LeaveRequest::where('employee_id', $employee->id)
+    //                 ->with('leaveType', 'approver')
+    //                 ->latest()
+    //                 ->paginate(10);
+    //     return view('leave-requests.index', compact('requests'));
+    // }
+
+public function index(Request $request)
+{
+    $employee = $this->getEmployee();
+
+    // Requête de base pour l'employé
+    $query = LeaveRequest::where('employee_id', $employee->id)
+                ->with('leaveType', 'approver');
+
+    // Appliquer les filtres
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    }
+    if ($request->filled('leave_type_id')) {
+        $query->where('leave_type_id', $request->leave_type_id);
     }
 
+    // Pagination (avec conservation des paramètres de filtre dans les liens)
+    $requests = $query->latest()->paginate(10)->appends($request->all());
+
+    // KPIs
+    $totalRequests = LeaveRequest::where('employee_id', $employee->id)->count();
+    $pendingCount  = LeaveRequest::where('employee_id', $employee->id)->where('status', 'pending')->count();
+    $approvedCount = LeaveRequest::where('employee_id', $employee->id)->where('status', 'approved')->count();
+
+    // Types de congés disponibles dans l'entreprise de l'employé
+    $leaveTypes = LeaveType::where('company_id', $employee->company_id)->get();
+
+    return view('leave-requests.index', compact(
+        'requests',
+        'totalRequests',
+        'pendingCount',
+        'approvedCount',
+        'leaveTypes'
+    ));
+}
+
     // Formulaire de création
+    private function getUpcomingHolidays(): array
+{
+    $fixed = [
+        ['month' => 1,  'day' => 1,   'name' => 'Jour de l\'An'],
+        ['month' => 5,  'day' => 1,   'name' => 'Fête du Travail'],
+        ['month' => 8,  'day' => 1,   'name' => 'Fête Nationale'],
+        ['month' => 8,  'day' => 15,  'name' => 'Assomption'],
+        ['month' => 11, 'day' => 1,   'name' => 'Toussaint'],
+        ['month' => 12, 'day' => 25,  'name' => 'Noël'],
+    ];
+
+    $holidays = [];
+    $year = now()->year;
+    foreach ($fixed as $h) {
+        $date = \Carbon\Carbon::createFromDate($year, $h['month'], $h['day'])->startOfDay();
+        if ($date->isPast()) {
+            $date->addYear();
+        }
+        $holidays[] = ['date' => $date, 'name' => $h['name']];
+    }
+
+    usort($holidays, fn($a, $b) => $a['date']->timestamp <=> $b['date']->timestamp);
+    return array_slice($holidays, 0, 2);
+}
 
     public function create()
     {
@@ -84,7 +144,12 @@ class LeaveRequestController extends Controller
         }
 
         $types = LeaveType::where('company_id', $employee->company_id)->get();
-        return view('leave-requests.create', compact('types'));
+
+        // ⭐ Ajoutez ces 3 lignes
+        $upcomingHolidays = collect($this->getUpcomingHolidays())->map(function ($item) {
+            return (object) $item;   // permet d'utiliser $holiday->date et $holiday->name dans Blade
+        });
+        return view('leave-requests.create', compact('types', 'upcomingHolidays'));
     }
     // public function create()
     // {
@@ -295,34 +360,80 @@ class LeaveRequestController extends Controller
     }
 
     // Pour manager/admin : liste des demandes à valider
-    public function pending()
-    {
-        $user = Auth::user();
-        $companyId = $user->company_id;
+    public function pending(Request $request)
+{
+    $user = Auth::user();
+    $companyId = $user->company_id;
 
-        if ($user->hasRole('admin')) {
-            $requests = LeaveRequest::where('company_id', $companyId)
-                        ->where('status', 'pending')
-                        ->with('employee.user', 'leaveType')
-                        ->paginate(10);
-        } elseif ($user->hasRole('manager')) {
-            // Récupérer le département du manager
-            $department = \App\Models\Department::where('manager_id', $user->id)->first();
-            if ($department) {
-                $employeeIds = $department->employees()->pluck('id');
-                $requests = LeaveRequest::whereIn('employee_id', $employeeIds)
-                            ->where('status', 'pending')
-                            ->with('employee.user', 'leaveType')
-                            ->paginate(10);
-            } else {
-                $requests = collect([]);
-            }
+    // Requête de base selon le rôle
+    $baseQuery = LeaveRequest::where('status', 'pending')
+                    ->with('employee.user', 'leaveType');
+
+    if ($user->hasRole('admin')) {
+        $baseQuery->where('company_id', $companyId);
+    } elseif ($user->hasRole('manager')) {
+        $department = \App\Models\Department::where('manager_id', $user->id)->first();
+        if ($department) {
+            $employeeIds = $department->employees()->pluck('id');
+            $baseQuery->whereIn('employee_id', $employeeIds);
         } else {
-            abort(403);
+            // Aucun département → aucune demande
+            $baseQuery->whereRaw('1 = 0');
         }
-
-        return view('leave-requests.pending', compact('requests'));
+    } else {
+        abort(403);
     }
+
+    // Appliquer les filtres (sur la requête de base)
+    if ($request->filled('employee_id')) {
+        $baseQuery->where('employee_id', $request->employee_id);
+    }
+    if ($request->filled('leave_type_id')) {
+        $baseQuery->where('leave_type_id', $request->leave_type_id);
+    }
+    if ($request->filled('start_date')) {
+        $baseQuery->whereDate('start_date', '>=', $request->start_date);
+    }
+    if ($request->filled('end_date')) {
+        $baseQuery->whereDate('end_date', '<=', $request->end_date);
+    }
+
+    // Pagination (clone pour ne pas affecter les KPIs)
+    $requests = (clone $baseQuery)->orderBy('created_at', 'desc')->paginate(10)->appends($request->all());
+
+    // KPIs (sur le même périmètre filtré)
+    $recentCount = (clone $baseQuery)
+                    ->where('created_at', '>=', now()->subDays(7))
+                    ->count();
+
+    $distinctEmployees = (clone $baseQuery)
+                    ->distinct('employee_id')
+                    ->count('employee_id');
+
+    // Listes pour les filtres (employés et types de congés)
+    if ($user->hasRole('admin')) {
+        $employees = \App\Models\Employee::where('company_id', $companyId)
+                    ->where('status', 'active')
+                    ->with('user')
+                    ->get();
+    } else {
+        // Manager : uniquement les employés de son département
+        $department = \App\Models\Department::where('manager_id', $user->id)->first();
+        $employees = $department
+                    ? $department->employees()->where('status', 'active')->with('user')->get()
+                    : collect([]);
+    }
+
+    $leaveTypes = \App\Models\LeaveType::where('company_id', $companyId)->get();
+
+    return view('leave-requests.pending', compact(
+        'requests',
+        'recentCount',
+        'distinctEmployees',
+        'employees',
+        'leaveTypes'
+    ));
+}
 
     // Valider ou refuser
     public function decide(Request $request, LeaveRequest $leaveRequest)

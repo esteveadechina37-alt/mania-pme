@@ -4,314 +4,275 @@
 
 @section('content')
 <style>
-    /* ========== DESIGN SYSTEM PREMIUM ========== */
     :root {
         --primary: #FF6200;
-        --primary-hover: #E05500;
-        --primary-light: rgba(255, 98, 0, 0.08);
-        --primary-glow: rgba(255, 98, 0, 0.25);
+        --primary-hover: #cc4e00;
+        --primary-light: rgba(255,98,0,0.10);
+        --primary-border: rgba(255,98,0,0.28);
         --dark: #0A0A0A;
         --gray-50: #F9FAFB;
         --gray-100: #F3F4F6;
         --gray-200: #E5E7EB;
-        --gray-300: #D1D5DB;
         --gray-600: #6B7280;
-        --gray-800: #1F2937;
         --white: #FFFFFF;
-        --shadow-sm: 0 2px 4px rgba(10, 10, 10, 0.02);
-        --shadow-md: 0 8px 24px rgba(10, 10, 10, 0.05);
-        --shadow-lg: 0 16px 40px rgba(255, 98, 0, 0.08);
+        --shadow-sm: 0 2px 8px rgba(10,10,10,0.04);
+        --shadow-md: 0 8px 24px rgba(10,10,10,0.07);
         --radius-sm: 8px;
-        --radius-md: 16px;
-        --radius-lg: 24px;
+        --radius-md: 14px;
+        --radius-lg: 20px;
         --radius-full: 9999px;
-        --transition-fast: 0.15s ease;
-        --transition-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        --transition: 0.3s ease;
     }
 
     @keyframes fadeSlideUp {
-        0% { opacity: 0; transform: translateY(20px); }
+        0%   { opacity: 0; transform: translateY(14px); }
         100% { opacity: 1; transform: translateY(0); }
     }
-    .animate-in {
-        animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        opacity: 0;
-    }
-    .delay-1 { animation-delay: 0.1s; }
-    .delay-2 { animation-delay: 0.2s; }
+    .animate-in { animation: fadeSlideUp 0.45s ease both; opacity: 0; }
+    .delay-1    { animation-delay: 0.08s; }
+    .delay-2    { animation-delay: 0.16s; }
+    .delay-3    { animation-delay: 0.24s; }
 
-    /* ========== HEADER ========== */
+    body { overflow-x: hidden; }
+
     .page-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        margin-bottom: 30px;
-        flex-wrap: wrap;
-        gap: 20px;
-        position: relative;
-    }
-    .page-header::after {
-        content: '';
-        position: absolute;
-        top: -20px;
-        left: 0;
-        width: 150px;
-        height: 150px;
-        background: var(--primary-glow);
-        filter: blur(80px);
-        z-index: -1;
-        pointer-events: none;
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+        max-width: 100%;
     }
     .page-title {
-        font-family: 'Clash Display', sans-serif;
-        font-size: 30px;
-        font-weight: 700;
-        color: var(--dark);
-        margin: 0 0 6px 0;
-        line-height: 1.2;
-        letter-spacing: -0.02em;
+        font-family: 'Clash Display', sans-serif; font-size: 22px; font-weight: 700;
+        color: var(--dark); margin: 0; display: flex; align-items: center; gap: 10px;
+        white-space: nowrap;
     }
-    .page-title span {
-        background: linear-gradient(135deg, var(--primary) 0%, #FF3D00 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .page-subtitle {
-        color: var(--gray-600);
-        font-family: 'Cabinet Grotesk', sans-serif;
-        font-size: 15px;
-        margin: 0;
+    .page-title i { color: var(--primary); }
+    .page-subtitle { color: var(--gray-600); font-size: 13px; margin: 4px 0 0; }
+    .role-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 5px 14px; border-radius: var(--radius-full);
+        background: var(--primary-light); border: 0.5px solid var(--primary-border);
+        font-size: 12px; font-weight: 600; color: var(--primary);
+        white-space: nowrap;
     }
 
-    /* ========== MAIN LAYOUT ========== */
     .content-grid {
         display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 24px;
-        align-items: start;
+        grid-template-columns: minmax(0, 1fr) 230px;
+        gap: 16px; align-items: start;
+        max-width: 100%;
     }
-    @media (max-width: 900px) {
-        .content-grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 768px) { .content-grid { grid-template-columns: 1fr; } }
 
-    /* ========== INTERNSHIP CARD ========== */
-    .internship-card {
-        background: var(--white);
-        border-radius: var(--radius-md);
-        padding: 28px;
+    /* Carte principale */
+    .main-card {
+        background: var(--white); border-radius: var(--radius-md);
+        border: 0.5px solid var(--gray-200); overflow: hidden;
         box-shadow: var(--shadow-md);
-        border: 1px solid var(--gray-200);
-        transition: var(--transition-smooth);
-        position: relative;
-        overflow: hidden;
-    }
-    .internship-card::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at top right, var(--primary-light), transparent 70%);
-        opacity: 0;
-        transition: var(--transition-smooth);
-    }
-    .internship-card:hover {
-        box-shadow: var(--shadow-lg);
-        transform: translateY(-2px);
-        border-color: var(--primary);
-    }
-    .internship-card:hover::before { opacity: 1; }
-
-    .internship-header {
-        display: flex;
-        align-items: center;
-        gap: 24px;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-        position: relative;
-        z-index: 1;
-    }
-    .avatar-placeholder {
-        width: 72px;
-        height: 72px;
-        border-radius: 18px;
-        background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        font-weight: 700;
-        flex-shrink: 0;
+        max-width: 100%;
     }
 
-    .info-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        position: relative;
-        z-index: 1;
+    .hero-band {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+        padding: 28px 24px 44px; position: relative;
     }
-    @media (max-width: 500px) {
-        .info-grid { grid-template-columns: 1fr; }
+    .hero-band::after {
+        content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+        height: 28px; background: var(--white); border-radius: 20px 20px 0 0;
     }
+    .hero-wrap { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+    .avatar {
+        width: 72px; height: 72px; border-radius: 18px;
+        background: rgba(255,255,255,0.20); backdrop-filter: blur(4px);
+        border: 2px solid rgba(255,255,255,0.50);
+        color: white; display: flex; align-items: center; justify-content: center;
+        font-size: 30px; font-weight: 700; flex-shrink: 0;
+        position: relative; z-index: 1;
+    }
+    .hero-info { position: relative; z-index: 1; flex: 1; min-width: 200px; }
+    .hero-name {
+        font-family: 'Clash Display', sans-serif; font-size: 22px; font-weight: 700;
+        color: white; line-height: 1.25; margin: 0 0 4px;
+        word-break: break-word;
+    }
+    .hero-role {
+        font-size: 13px; color: rgba(255,255,255,0.80);
+        display: flex; align-items: center; gap: 6px; margin: 0; flex-wrap: wrap;
+    }
+    .hero-role .sep { color: rgba(255,255,255,0.35); }
+
+    .card-body { padding: 16px 24px 22px; }
+    .section-label {
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.7px; color: var(--gray-600);
+        display: flex; align-items: center; gap: 8px; margin: 0 0 12px;
+    }
+    .section-label i { color: var(--primary); }
+    .section-label::after {
+        content: ''; flex: 1; height: 0.5px; background: var(--gray-200);
+    }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; max-width: 100%; }
+    @media (max-width: 480px) { .info-grid { grid-template-columns: 1fr; } }
+    .info-cell {
+        padding: 11px 0; border-bottom: 0.5px solid var(--gray-100);
+        overflow-wrap: break-word; word-break: break-word;
+    }
+    .info-cell:nth-child(odd) { padding-right: 24px; }
+    .info-cell:nth-last-child(-n+2) { border-bottom: none; }
     .info-label {
-        font-size: 11px;
-        color: var(--gray-600);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 4px;
+        font-size: 11px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: 0.5px; color: var(--gray-600);
+        display: flex; align-items: center; gap: 5px; margin: 0 0 4px;
     }
+    .info-label i { color: var(--primary); font-size: 12px; }
     .info-value {
-        font-size: 15px;
-        font-weight: 600;
-        color: var(--dark);
+        font-size: 14px; font-weight: 600; color: var(--dark); margin: 0;
+    }
+    .info-value.salary { font-size: 15px; color: var(--primary); }
+    .contract-pill {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 3px 10px; border-radius: var(--radius-full);
+        background: var(--primary-light); border: 0.5px solid var(--primary-border);
+        font-size: 12px; font-weight: 600; color: var(--primary);
+        white-space: nowrap;
     }
 
-    /* ========== GUIDE CARD ========== */
-    .guide-card {
-        background: var(--white);
-        border-radius: var(--radius-md);
-        padding: 24px;
-        box-shadow: var(--shadow-md);
-        border: 1px solid var(--gray-200);
-        position: relative;
-        overflow: hidden;
-        transition: var(--transition-smooth);
+    /* Colonne latérale */
+    .side-stack { display: flex; flex-direction: column; gap: 14px; max-width: 100%; }
+
+    .side-card {
+        background: var(--white); border-radius: var(--radius-md);
+        border: 0.5px solid var(--gray-200); padding: 16px;
+        box-shadow: var(--shadow-sm);
+        max-width: 100%;
     }
-    .guide-card::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at top right, var(--primary-light), transparent 70%);
-        opacity: 0;
-        transition: var(--transition-smooth);
+    .side-title {
+        font-family: 'Clash Display', sans-serif; font-size: 14px; font-weight: 700;
+        color: var(--dark); margin: 0 0 12px;
+        display: flex; align-items: center; gap: 7px;
     }
-    .guide-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-        border-color: var(--primary);
-    }
-    .guide-card:hover::before { opacity: 1; }
-    .guide-card .card-title {
-        font-family: 'Clash Display', sans-serif;
-        font-size: 20px;
-        font-weight: 700;
-        color: var(--dark);
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        position: relative;
-        z-index: 1;
-    }
-    .guide-card .card-title i { color: var(--primary); }
-    .guide-item {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 20px;
-        position: relative;
-        z-index: 1;
-    }
+    .side-title i { color: var(--primary); }
+
+    .guide-item { display: flex; gap: 10px; margin-bottom: 11px; }
+    .guide-item:last-child { margin-bottom: 0; }
     .guide-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: var(--radius-sm);
-        background: var(--primary-light);
-        color: var(--primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        flex-shrink: 0;
+        width: 28px; height: 28px; border-radius: 8px;
+        background: var(--primary-light); color: var(--primary);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; flex-shrink: 0;
     }
     .guide-text strong {
-        font-family: 'Cabinet Grotesk', sans-serif;
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--dark);
-        display: block;
-        margin-bottom: 4px;
+        font-size: 13px; font-weight: 700; color: var(--dark);
+        display: block; margin-bottom: 2px;
     }
-    .guide-text p {
-        color: var(--gray-600);
-        font-size: 13px;
-        margin: 0;
-    }
+    .guide-text p { font-size: 12px; color: var(--gray-600); margin: 0; line-height: 1.4; }
 </style>
 
 <div class="page-header animate-in">
-    <div>
-        <h1 class="page-title"><i class="fas fa-user-graduate" style="color:var(--primary);"></i> <span>Mon stage</span></h1>
-        <p class="page-subtitle">Informations relatives à votre stage</p>
+    <div class="full-width" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h1 class="page-title">
+                <i class="fas fa-user-graduate"></i> Mon stage
+            </h1>
+            <p class="page-subtitle">Informations relatives à votre stage</p>
+        </div>
+        <span class="role-badge">
+            <i class="fas fa-briefcase"></i> Stagiaire
+        </span>
     </div>
 </div>
 
 <div class="content-grid">
-    {{-- Colonne gauche : Détails du stage --}}
-    <div class="internship-card animate-in delay-1">
-        <div class="internship-header">
-            <div class="avatar-placeholder">
-                {{ strtoupper(substr($user->name, 0, 1)) }}
-            </div>
-            <div>
-                <h2 style="font-family:'Clash Display',sans-serif; font-size:24px; margin:0; color:var(--dark);">
-                    {{ $user->name }}
-                </h2>
-                <p style="color:var(--gray-600); margin:4px 0 0; font-family:'Cabinet Grotesk',sans-serif;">
-                    {{ $employee->position ?? 'Stagiaire' }} · {{ $user->company->name ?? '' }}
-                </p>
+    <!-- Carte principale -->
+    <div class="main-card animate-in delay-1">
+        <div class="hero-band">
+            <div class="hero-wrap">
+                <div class="avatar">
+                    {{ strtoupper(substr($user->name, 0, 1)) }}
+                </div>
+                <div class="hero-info">
+                    <p class="hero-name">{{ $user->name }}</p>
+                    <p class="hero-role">
+                        <i class="fas fa-user-graduate"></i>
+                        {{ $employee->position ?? 'Stagiaire' }}
+                        <span class="sep">|</span>
+                        {{ $user->company->name ?? '' }}
+                    </p>
+                </div>
             </div>
         </div>
-
-        <div class="info-grid">
-            <div class="info-item">
-                <div class="info-label">Département</div>
-                <div class="info-value">{{ $employee->department->name ?? '—' }}</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Type de contrat</div>
-                <div class="info-value">{{ $employee->contract_type ?? '—' }}</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Date de début</div>
-                <div class="info-value">{{ $employee->hire_date ? \Carbon\Carbon::parse($employee->hire_date)->format('d/m/Y') : '—' }}</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Date de fin</div>
-                <div class="info-value">{{ $employee->contract_end_date ? \Carbon\Carbon::parse($employee->contract_end_date)->format('d/m/Y') : '—' }}</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Tuteur / Manager</div>
-                <div class="info-value">{{ $employee->department->manager->name ?? '—' }}</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Salaire / Gratification</div>
-                <div class="info-value">{{ $employee->salary ? number_format($employee->salary, 0, ',', ' ') . ' FCFA' : '—' }}</div>
+        <div class="card-body">
+            <p class="section-label">
+                <i class="fas fa-id-badge"></i> Informations du stage
+            </p>
+            <div class="info-grid">
+                <div class="info-cell">
+                    <p class="info-label"><i class="fas fa-building"></i> Département</p>
+                    <p class="info-value">{{ $employee->department->name ?? '—' }}</p>
+                </div>
+                <div class="info-cell">
+                    <p class="info-label"><i class="fas fa-file-contract"></i> Type de contrat</p>
+                    <p class="info-value">
+                        @if($employee->contract_type)
+                            <span class="contract-pill">
+                                <i class="fas fa-check-circle"></i>
+                                {{ $employee->contract_type }}
+                            </span>
+                        @else
+                            —
+                        @endif
+                    </p>
+                </div>
+                <div class="info-cell">
+                    <p class="info-label"><i class="fas fa-calendar-alt"></i> Date de début</p>
+                    <p class="info-value">
+                        {{ $employee->hire_date ? \Carbon\Carbon::parse($employee->hire_date)->format('d/m/Y') : '—' }}
+                    </p>
+                </div>
+                <div class="info-cell">
+                    <p class="info-label"><i class="fas fa-calendar-times"></i> Date de fin</p>
+                    <p class="info-value">
+                        {{ $employee->contract_end_date ? \Carbon\Carbon::parse($employee->contract_end_date)->format('d/m/Y') : '—' }}
+                    </p>
+                </div>
+                <div class="info-cell">
+                    <p class="info-label"><i class="fas fa-user-tie"></i> Tuteur / Manager</p>
+                    <p class="info-value">{{ $employee->department->manager->name ?? '—' }}</p>
+                </div>
+                <div class="info-cell">
+                    <p class="info-label"><i class="fas fa-money-bill-wave"></i> Gratification</p>
+                    <p class="info-value salary">
+                        {{ $employee->salary ? number_format($employee->salary, 0, ',', ' ') . ' FCFA' : '—' }}
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 
-    {{-- Colonne droite : Guide --}}
-    <div class="guide-card animate-in delay-2" style="position: sticky; top: 100px;">
-        <h3 class="card-title"><i class="fas fa-lightbulb"></i> Votre stage</h3>
-        <div class="guide-item">
-            <div class="guide-icon"><i class="fas fa-calendar-alt"></i></div>
-            <div class="guide-text">
-                <strong>Période de stage</strong>
-                <p>Votre stage a une durée déterminée. La date de fin est indiquée sur votre contrat.</p>
+    <!-- Colonne latérale -->
+    <div class="side-stack">
+        <div class="side-card animate-in delay-2">
+            <p class="side-title"><i class="fas fa-lightbulb"></i> Votre stage</p>
+            <div class="guide-item">
+                <div class="guide-icon"><i class="fas fa-calendar-alt"></i></div>
+                <div class="guide-text">
+                    <strong>Période de stage</strong>
+                    <p>Votre stage a une durée déterminée. La date de fin est indiquée sur votre contrat.</p>
+                </div>
             </div>
-        </div>
-        <div class="guide-item">
-            <div class="guide-icon"><i class="fas fa-user-tie"></i></div>
-            <div class="guide-text">
-                <strong>Votre tuteur</strong>
-                <p>Votre manager est votre tuteur de stage. Contactez-le pour toute question.</p>
+            <div class="guide-item">
+                <div class="guide-icon"><i class="fas fa-user-tie"></i></div>
+                <div class="guide-text">
+                    <strong>Votre tuteur</strong>
+                    <p>Votre manager est votre tuteur de stage. Contactez-le pour toute question.</p>
+                </div>
             </div>
-        </div>
-        <div class="guide-item">
-            <div class="guide-icon"><i class="fas fa-file-alt"></i></div>
-            <div class="guide-text">
-                <strong>Attestation de stage</strong>
-                <p>À la fin de votre stage, une attestation sera générée par l'administration.</p>
+            <div class="guide-item">
+                <div class="guide-icon"><i class="fas fa-file-alt"></i></div>
+                <div class="guide-text">
+                    <strong>Attestation de stage</strong>
+                    <p>À la fin de votre stage, une attestation sera générée par l'administration.</p>
+                </div>
             </div>
         </div>
     </div>

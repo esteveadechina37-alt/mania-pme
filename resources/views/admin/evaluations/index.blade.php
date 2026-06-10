@@ -346,7 +346,7 @@
 
 <div class="page-header animate-in">
     <div>
-        <h1 class="page-title"><i class="fas fa-star" style="color:var(--primary);"></i> <span>Évaluations</span></h1>
+        <h1 class="page-title"><i class="fas fa-star" style="color:var(--primary);"></i>Gestion <span>Évaluations</span></h1>
         <p class="page-subtitle">Suivez les performances de vos employés</p>
     </div>
     <a href="{{ route('admin.evaluations.create') }}" class="btn-primary">

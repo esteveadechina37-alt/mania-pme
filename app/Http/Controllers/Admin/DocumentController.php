@@ -14,16 +14,48 @@ use Illuminate\Support\Facades\Mail;
 
 class DocumentController extends Controller
 {
-    public function index()
-    {
-        $companyId = auth()->user()->company_id;
-        $documents = Document::where('company_id', $companyId)
-                      ->with('employee.user')
-                      ->orderBy('created_at', 'desc')
-                      ->paginate(15);
+    public function index(Request $request)
+{
+    $companyId = auth()->user()->company_id;
 
-        return view('admin.documents.index', compact('documents'));
-    }
+    // Requête de base
+    $query = Document::where('company_id', $companyId)
+                     ->with('employee.user')
+                     ->when($request->filled('employee_id'), fn($q) => $q->where('employee_id', $request->employee_id))
+                     ->when($request->filled('type'), fn($q) => $q->where('type', $request->type));
+
+    // Pagination
+    $documents = $query->latest()->paginate(10)->appends($request->all());
+
+    // KPIs (sur le périmètre filtré)
+    $totalDocuments = (clone $query)->count();
+    $totalCertificates = (clone $query)->where('type', 'certificate')->count();
+    $distinctEmployees = (clone $query)->distinct('employee_id')->count('employee_id');
+
+    // Employés pour le filtre
+    $employees = Employee::where('company_id', $companyId)
+                         ->where('status', 'active')
+                         ->with('user')
+                         ->get();
+
+    return view('admin.documents.index', compact(
+        'documents',
+        'employees',
+        'totalDocuments',
+        'totalCertificates',
+        'distinctEmployees'
+    ));
+}
+    // public function index()
+    // {
+    //     $companyId = auth()->user()->company_id;
+    //     $documents = Document::where('company_id', $companyId)
+    //                   ->with('employee.user')
+    //                   ->orderBy('created_at', 'desc')
+    //                   ->paginate(15);
+
+    //     return view('admin.documents.index', compact('documents'));
+    // }
 
     public function create()
     {
@@ -127,36 +159,38 @@ class DocumentController extends Controller
     }
 
 
-    private function generateAttestationPdf(Employee $employee, $type, $date, $hash)
-    {
-        $verificationUrl = route('documents.verify', ['hash' => $hash]);
+   private function generateAttestationPdf(Employee $employee, $type, $date, $hash)
+{
+    $verificationUrl = route('documents.verify', ['hash' => $hash]);
 
-        // Générer le SVG et l'encoder en base64
-        $qrCodeSvg = QrCode::format('svg')
-                        ->size(120)
-                        ->margin(2)
-                        ->generate($verificationUrl);
+    $qrCodeSvg = QrCode::format('svg')
+                    ->size(120)
+                    ->margin(2)
+                    ->generate($verificationUrl);
 
-        $qrCodeBase64 = base64_encode($qrCodeSvg);
+    $qrCodeBase64 = base64_encode($qrCodeSvg);
 
-        $data = [
-            'employee' => $employee->load('user', 'company'),
-            'type'     => $type,
-            'date'     => $date ?: now()->format('d/m/Y'),
-            'qrCode'   => $qrCodeBase64, // base64 pure, sans préfixe
-        ];
+    // Formater la date en français (ex: "8 juin 2026")
+    $formattedDate = \Carbon\Carbon::parse($date)->translatedFormat('j F Y');
 
-        $pdf = DomPDF::loadView('admin.documents.attestation-pdf', $data);
+    $data = [
+        'employee' => $employee->load('user', 'company', 'department'), // department pour le détail
+        'type'     => $type,
+        'date'     => $formattedDate,
+        'qrCode'   => $qrCodeBase64,
+    ];
 
-        $directory = 'documents/' . $employee->company_id;
-        $filename  = $directory . '/' . Str::slug($type == 'work' ? 'Attestation de travail' : 'Attestation de stage') 
-                    . '_' . $employee->user->name . '_' . time() . '.pdf';
+    $pdf = DomPDF::loadView('admin.documents.attestation-pdf', $data);
 
-        \Storage::makeDirectory($directory);
-        \Storage::put($filename, $pdf->output());
+    $directory = 'documents/' . $employee->company_id;
+    $filename  = $directory . '/' . Str::slug($type == 'work' ? 'Attestation de travail' : 'Attestation de stage') 
+                . '_' . $employee->user->name . '_' . time() . '.pdf';
 
-        return $filename;
-    }
+    \Storage::makeDirectory($directory);
+    \Storage::put($filename, $pdf->output());
+
+    return $filename;
+}
     
     // public function storeAttestation(Request $request)
     // {

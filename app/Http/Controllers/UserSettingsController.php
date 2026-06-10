@@ -6,13 +6,26 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\UserLogin;
+
 
 class UserSettingsController extends Controller
 {
+    // public function edit()
+    // {
+    //     $user = User::find(Auth::id());
+    //     return view('user-settings.edit', compact('user'));
+    // }
+    // Dans le contrôleur qui renvoie la vue "user.settings"
     public function edit()
     {
-        $user = User::find(Auth::id());
-        return view('user-settings.edit', compact('user'));
+        $user = auth()->user();
+        $loginLogs = \App\Models\UserLogin::where('user_id', $user->id)
+                        ->latest()
+                        ->limit(5)
+                        ->get();
+
+        return view('user-settings.edit', compact('user', 'loginLogs'));
     }
 
     public function update(Request $request)

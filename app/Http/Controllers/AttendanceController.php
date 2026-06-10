@@ -496,16 +496,16 @@ class AttendanceController extends Controller
     return $pdf->download('presences-' . \Carbon\Carbon::parse($date)->format('Y-m-d') . '.pdf');
 }
 
-    //     public function exportPdf()
-    // {
-    //     $employee = $this->getEmployee();
-    //     $attendances = Attendance::where('employee_id', $employee->id)
-    //                     ->orderBy('date', 'desc')
-    //                     ->get();
+        public function exportPdf()
+    {
+        $employee = $this->getEmployee();
+        $attendances = Attendance::where('employee_id', $employee->id)
+                        ->orderBy('date', 'desc')
+                        ->get();
 
-    //     $pdf = \PDF::loadView('attendances.pdf', compact('attendances', 'employee'));
-    //     return $pdf->download('pointages-'.$employee->user->name.'.pdf');
-    // }
+        $pdf = \PDF::loadView('attendances.pdf', compact('attendances', 'employee'));
+        return $pdf->download('pointages-'.$employee->user->name.'.pdf');
+    }
 
     // //  la méthode d’export PDF pour la liste des présences (admin/manager)
     // public function exportListPdf(Request $request)

@@ -18,17 +18,21 @@ class CompanySettingsController extends Controller
         $company = auth()->user()->company;
 
         $request->validate([
+            'address'         => 'nullable|string|max:255',
+            'city'            => 'nullable|string|max:100',
             'latitude'        => 'required|numeric',
             'longitude'       => 'required|numeric',
             'geofence_radius' => 'required|integer|min:50|max:5000',
         ]);
 
         $company->update([
+            'address'         => $request->address,
+            'city'            => $request->city,
             'latitude'        => $request->latitude,
             'longitude'       => $request->longitude,
             'geofence_radius' => $request->geofence_radius,
         ]);
 
-        return back()->with('success', 'Paramètres de géolocalisation mis à jour.');
+        return back()->with('success', 'Paramètres mis à jour avec succès.');
     }
 }

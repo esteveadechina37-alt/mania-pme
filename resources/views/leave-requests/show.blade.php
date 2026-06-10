@@ -4,7 +4,6 @@
 
 @section('content')
 <style>
-    /* ========== DESIGN SYSTEM (identique dashboard) ========== */
     :root {
         --primary: #FF6200;
         --primary-hover: #E05500;
@@ -14,274 +13,134 @@
         --gray-50: #F9FAFB;
         --gray-100: #F3F4F6;
         --gray-200: #E5E7EB;
-        --gray-300: #D1D5DB;
         --gray-600: #6B7280;
-        --gray-800: #1F2937;
         --white: #FFFFFF;
-        --shadow-sm: 0 2px 4px rgba(10, 10, 10, 0.02);
-        --shadow-md: 0 8px 24px rgba(10, 10, 10, 0.05);
-        --shadow-lg: 0 16px 40px rgba(255, 98, 0, 0.08);
-        --radius-sm: 8px;
-        --radius-md: 16px;
-        --radius-lg: 24px;
+        --shadow-sm: 0 2px 8px rgba(10,10,10,0.04);
+        --shadow-md: 0 8px 20px rgba(10,10,10,0.05);
+        --radius-sm: 6px;
+        --radius-md: 14px;
         --radius-full: 9999px;
-        --transition-fast: 0.15s ease;
-        --transition-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        --transition-smooth: 0.3s ease;
     }
-
     @keyframes fadeSlideUp {
-        0% { opacity: 0; transform: translateY(20px); }
-        100% { opacity: 1; transform: translateY(0); }
+        0% { opacity:0; transform:translateY(12px); }
+        100% { opacity:1; transform:translateY(0); }
     }
-    .animate-in {
-        animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        opacity: 0;
-    }
-    .delay-1 { animation-delay: 0.1s; }
-    .delay-2 { animation-delay: 0.2s; }
+    .animate-in { animation: fadeSlideUp 0.45s ease both; opacity:0; }
+    .delay-1 { animation-delay:0.08s; }
+    .delay-2 { animation-delay:0.16s; }
 
-    /* ========== HEADER ========== */
     .page-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        margin-bottom: 30px;
-        flex-wrap: wrap;
-        gap: 20px;
-        position: relative;
-    }
-    .page-header::after {
-        content: '';
-        position: absolute;
-        top: -20px;
-        left: 0;
-        width: 150px;
-        height: 150px;
-        background: var(--primary-glow);
-        filter: blur(80px);
-        z-index: -1;
-        pointer-events: none;
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
     }
     .page-title {
-        font-family: 'Clash Display', sans-serif;
-        font-size: 30px;
-        font-weight: 700;
-        color: var(--dark);
-        margin: 0 0 6px 0;
-        line-height: 1.2;
-        letter-spacing: -0.02em;
+        font-family: 'Clash Display', sans-serif; font-size: 22px; font-weight: 700;
+        color: var(--dark); margin: 0; display: flex; align-items: center; gap: 8px;
     }
-    .page-title span {
-        background: linear-gradient(135deg, var(--primary) 0%, #FF3D00 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .page-subtitle {
-        color: var(--gray-600);
-        font-family: 'Cabinet Grotesk', sans-serif;
-        font-size: 15px;
-        margin: 0;
-    }
+    .page-title i { color: var(--primary); }
+    .page-subtitle { color: var(--gray-600); font-size: 13px; margin: 0; }
 
-    .btn-outline {
-        background: var(--white);
-        color: var(--dark);
-        padding: 11px 24px;
-        border-radius: var(--radius-full);
-        font-family: 'Cabinet Grotesk', sans-serif;
-        font-weight: 600;
-        font-size: 13px;
-        border: 1px solid var(--gray-200);
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        text-decoration: none;
-        transition: var(--transition-smooth);
-        white-space: nowrap;
+    .btn-outline-sm {
+        background: var(--white); color: var(--dark); padding: 6px 14px;
+        border-radius: var(--radius-full); font-weight: 600; font-size: 12px;
+        border: 1px solid var(--gray-200); display: inline-flex; align-items: center;
+        gap: 5px; text-decoration: none; transition: var(--transition-smooth);
     }
-    .btn-outline:hover {
-        background: var(--gray-50);
-        border-color: var(--primary-glow);
-    }
+    .btn-outline-sm:hover { background: var(--gray-50); border-color: var(--primary); }
 
-    /* ========== MAIN LAYOUT ========== */
     .content-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 24px;
-        align-items: start;
+        display: grid; grid-template-columns: 1fr 240px; gap: 16px; align-items: start;
     }
-    @media (max-width: 900px) {
-        .content-grid {
-            grid-template-columns: 1fr;
-        }
-    }
+    @media (max-width: 850px) { .content-grid { grid-template-columns: 1fr; } }
 
-    /* ========== CARTE DÉTAIL ========== */
     .detail-card {
-        background: var(--white);
-        border-radius: var(--radius-md);
-        padding: 32px;
-        box-shadow: var(--shadow-md);
-        border: 1px solid var(--gray-200);
-        transition: var(--transition-smooth);
+        background: var(--white); border-radius: var(--radius-md);
+        padding: 18px; box-shadow: var(--shadow-md); border: 1px solid var(--gray-200);
     }
+    .card-title {
+        font-family: 'Clash Display', sans-serif; font-size: 16px; font-weight: 700;
+        color: var(--dark); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+    }
+    .card-title i { color: var(--primary); }
 
-    .badge-status {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 18px;
-        border-radius: var(--radius-full);
+    .badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;
+    }
+    .badge-pending { background: #FEF3C7; color: #92400E; }
+    .badge-approved { background: #DCFCE7; color: #166534; }
+    .badge-rejected { background: #FEE2E2; color: #991B1B; }
+
+    .info-row {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 0; border-bottom: 1px solid var(--gray-100);
         font-size: 13px;
-        font-weight: 600;
     }
-    .badge-pending { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-    .badge-approved { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-    .badge-rejected { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .info-row:last-child { border-bottom: none; }
+    .info-icon {
+        width: 32px; height: 32px; border-radius: 8px;
+        background: var(--primary-light); color: var(--primary);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14px; flex-shrink: 0;
+    }
+    .info-text strong { font-size: 14px; color: var(--dark); display: block; }
+    .info-text span { font-size: 12px; color: var(--gray-600); }
 
-    .info-label {
-        color: var(--gray-600);
-        font-size: 13px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: 4px;
+    .btn-approve, .btn-reject {
+        padding: 8px 20px; border-radius: var(--radius-full); font-weight: 600;
+        font-size: 13px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+        transition: 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
-    .info-value {
-        font-weight: 600;
-        color: var(--dark);
-        font-size: 15px;
-    }
+    .btn-approve { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
+    .btn-approve:hover { background: #BBF7D0; transform: translateY(-1px); }
+    .btn-reject { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+    .btn-reject:hover { background: #FECACA; transform: translateY(-1px); }
 
-    .btn-approve {
-        background: #dcfce7;
-        color: #166534;
-        border: 1px solid #bbf7d0;
-        padding: 10px 24px;
-        border-radius: var(--radius-full);
-        font-weight: 600;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        transition: var(--transition-smooth);
-        font-family: 'Cabinet Grotesk', sans-serif;
-    }
-    .btn-approve:hover {
-        background: #bbf7d0;
-        box-shadow: 0 4px 12px rgba(22, 101, 52, 0.15);
-    }
-    .btn-reject {
-        background: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fecaca;
-        padding: 10px 24px;
-        border-radius: var(--radius-full);
-        font-weight: 600;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        transition: var(--transition-smooth);
-        font-family: 'Cabinet Grotesk', sans-serif;
-    }
-    .btn-reject:hover {
-        background: #fecaca;
-        box-shadow: 0 4px 12px rgba(153, 27, 27, 0.15);
-    }
-
-    /* ========== CARTE GUIDE ========== */
     .guide-card {
-        background: var(--white);
-        border-radius: var(--radius-md);
-        padding: 24px;
-        box-shadow: var(--shadow-md);
-        border: 1px solid var(--gray-200);
-        position: relative;
-        overflow: hidden;
-        transition: var(--transition-smooth);
+        background: var(--white); border-radius: var(--radius-md);
+        padding: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200);
+        position: sticky; top: 80px;
     }
-    .guide-card::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at top right, var(--primary-light), transparent 70%);
-        opacity: 0;
-        transition: var(--transition-smooth);
+    .guide-card h4 {
+        font-family: 'Clash Display', sans-serif; font-size: 15px; font-weight: 700;
+        color: var(--dark); margin: 0 0 10px; display: flex; align-items: center; gap: 6px;
     }
-    .guide-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-        border-color: var(--primary);
-    }
-    .guide-card:hover::before { opacity: 1; }
-    .guide-card .card-title {
-        font-family: 'Clash Display', sans-serif;
-        font-size: 20px;
-        font-weight: 700;
-        color: var(--dark);
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        position: relative;
-        z-index: 1;
-    }
-    .guide-card .card-title i { color: var(--primary); }
-    .guide-item {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 20px;
-        position: relative;
-        z-index: 1;
-    }
+    .guide-card h4 i { color: var(--primary); }
+    .guide-item { display: flex; gap: 8px; margin-bottom: 10px; font-size: 12px; }
     .guide-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: var(--radius-sm);
-        background: var(--primary-light);
-        color: var(--primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        flex-shrink: 0;
+        width: 24px; height: 24px; border-radius: 6px; background: var(--primary-light);
+        color: var(--primary); display: flex; align-items: center; justify-content: center;
+        font-size: 11px; flex-shrink: 0;
     }
-    .guide-text strong {
-        font-family: 'Cabinet Grotesk', sans-serif;
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--dark);
-        display: block;
-        margin-bottom: 4px;
-    }
-    .guide-text p {
-        color: var(--gray-600);
-        font-size: 13px;
-        margin: 0;
-    }
+    .guide-text strong { font-size: 12px; display: block; margin-bottom: 2px; }
+    .guide-text p { color: var(--gray-600); margin: 0; line-height: 1.3; }
 </style>
 
 <div class="page-header animate-in">
     <div>
-        <h1 class="page-title"><i class="fas fa-file-alt" style="color:var(--primary);"></i> <span>Demande de congé</span></h1>
-        <p class="page-subtitle">Détail de la demande de <strong>{{ $leaveRequest->employee->user->name }}</strong></p>
+        <h1 class="page-title">
+            <i class="fas fa-file-alt" style="color:var(--primary); margin-right:6px;"></i>
+            Demande de congé
+        </h1>
+        <p class="page-subtitle">
+            {{ $leaveRequest->employee->user->name }} · 
+            <strong>{{ $leaveRequest->leaveType->name }}</strong>
+        </p>
     </div>
-    <a href="{{ auth()->user()->hasAnyRole(['manager', 'admin']) ? route('leave-requests.pending') : route('leave-requests.index') }}" class="btn-outline">
-        <i class="fas fa-arrow-left"></i> Retour à la liste
+    <a href="{{ auth()->user()->hasAnyRole(['manager', 'admin']) ? route('leave-requests.pending') : route('leave-requests.index') }}" 
+       class="btn-outline-sm">
+        <i class="fas fa-arrow-left"></i> Retour
     </a>
 </div>
 
 <div class="content-grid">
-    {{-- Colonne gauche : Détail de la demande --}}
     <div class="detail-card animate-in delay-1">
         {{-- En-tête avec statut --}}
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:28px;">
-            <h2 style="font-family:'Clash Display', sans-serif; font-size:22px; margin:0; display:flex; align-items:center; gap:8px;">
-                <i class="fas fa-umbrella-beach" style="color:var(--primary);"></i>
-                {{ $leaveRequest->leaveType->name }}
-            </h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <span class="card-title" style="margin-bottom:0;">
+                <i class="fas fa-umbrella-beach"></i> {{ $leaveRequest->leaveType->name }}
+            </span>
             @php
                 $statusClass = match($leaveRequest->status) {
                     'pending' => 'badge-pending',
@@ -290,7 +149,7 @@
                     default => ''
                 };
             @endphp
-            <span class="badge-status {{ $statusClass }}">
+            <span class="badge {{ $statusClass }}">
                 @if($leaveRequest->status == 'pending')
                     <i class="fas fa-clock"></i> En attente
                 @elseif($leaveRequest->status == 'approved')
@@ -301,46 +160,44 @@
             </span>
         </div>
 
-        {{-- Détails --}}
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px 20px; margin-bottom:28px;">
-            <div>
-                <div class="info-label"><i class="fas fa-calendar-alt" style="color:var(--primary);"></i> Date de début</div>
-                <div class="info-value">{{ $leaveRequest->start_date->format('d/m/Y') }}</div>
-            </div>
-            <div>
-                <div class="info-label"><i class="fas fa-calendar-check" style="color:var(--primary);"></i> Date de fin</div>
-                <div class="info-value">{{ $leaveRequest->end_date->format('d/m/Y') }}</div>
-            </div>
-            <div>
-                <div class="info-label"><i class="fas fa-hourglass-half" style="color:var(--primary);"></i> Durée</div>
-                <div class="info-value">{{ $leaveRequest->start_date->diffInDays($leaveRequest->end_date) + 1 }} jour(s)</div>
-            </div>
-            <div>
-                <div class="info-label"><i class="fas fa-user" style="color:var(--primary);"></i> Demandeur</div>
-                <div class="info-value">{{ $leaveRequest->employee->user->name }}</div>
+        {{-- Infos --}}
+        <div class="info-row">
+            <div class="info-icon"><i class="fas fa-calendar-alt"></i></div>
+            <div class="info-text">
+                <strong>Dates</strong>
+                <span>{{ $leaveRequest->start_date->format('d/m/Y') }} → {{ $leaveRequest->end_date->format('d/m/Y') }} 
+                ({{ $leaveRequest->start_date->diffInDays($leaveRequest->end_date) + 1 }} jour(s))</span>
             </div>
         </div>
-
-        {{-- Motif --}}
-        <div style="margin-bottom:28px; padding:16px; background:var(--gray-50); border-radius:var(--radius-sm); border:1px solid var(--gray-200);">
-            <div class="info-label"><i class="fas fa-pen" style="color:var(--primary);"></i> Motif</div>
-            <p style="font-weight:600; color:var(--dark); margin:4px 0 0;">{{ $leaveRequest->reason ?: 'Aucun motif fourni' }}</p>
+        <div class="info-row">
+            <div class="info-icon"><i class="fas fa-user"></i></div>
+            <div class="info-text">
+                <strong>Demandeur</strong>
+                <span>{{ $leaveRequest->employee->user->name }}</span>
+            </div>
         </div>
-
-        {{-- Approbateur --}}
+        @if($leaveRequest->reason)
+        <div class="info-row">
+            <div class="info-icon"><i class="fas fa-pen"></i></div>
+            <div class="info-text">
+                <strong>Motif</strong>
+                <span>{{ $leaveRequest->reason }}</span>
+            </div>
+        </div>
+        @endif
         @if($leaveRequest->approved_by)
-        <div style="margin-bottom:28px;">
-            <div class="info-label"><i class="fas fa-user-check" style="color:var(--primary);"></i> Décision prise par</div>
-            <div class="info-value">
-                {{ $leaveRequest->approver->name }} 
-                <span style="font-weight:400; color:var(--gray-600);">({{ $leaveRequest->approver->getRoleNames()->first() }})</span>
+        <div class="info-row">
+            <div class="info-icon"><i class="fas fa-user-check"></i></div>
+            <div class="info-text">
+                <strong>Décision par</strong>
+                <span>{{ $leaveRequest->approver->name }} ({{ $leaveRequest->approver->getRoleNames()->first() }})</span>
             </div>
         </div>
         @endif
 
-        {{-- Boutons de validation (admin/manager) --}}
+        {{-- Actions (manager/admin) --}}
         @if($leaveRequest->status == 'pending' && auth()->user()->hasAnyRole(['admin', 'manager']))
-        <div style="display:flex; gap:12px; justify-content:flex-end; border-top:1px solid var(--gray-100); padding-top:24px;">
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px; padding-top:12px; border-top:1px solid var(--gray-100);">
             <form method="POST" action="{{ route('leave-requests.decide', $leaveRequest) }}" style="display:inline;">
                 @csrf
                 <input type="hidden" name="decision" value="rejected">
@@ -359,35 +216,34 @@
         @endif
     </div>
 
-    {{-- Colonne droite : Guide pour le manager --}}
-    <div class="guide-card animate-in delay-2" style="position: sticky; top: 100px;">
-        <h3 class="card-title"><i class="fas fa-clipboard-check"></i> Avant de valider</h3>
+    <div class="guide-card animate-in delay-2">
+        <h4><i class="fas fa-lightbulb"></i> Guide</h4>
         <div class="guide-item">
             <div class="guide-icon"><i class="fas fa-user-check"></i></div>
             <div class="guide-text">
-                <strong>Effectif présent</strong>
-                <p>Assurez-vous qu'au moins un autre employé peut couvrir les tâches pendant l'absence.</p>
+                <strong>Effectif</strong>
+                <p>Assurez-vous qu'un collègue peut couvrir les tâches.</p>
             </div>
         </div>
         <div class="guide-item">
             <div class="guide-icon"><i class="fas fa-calendar-week"></i></div>
             <div class="guide-text">
-                <strong>Période d'essai</strong>
-                <p>Vérifiez que l'employé a bien acquis les droits à congé (ancienneté suffisante).</p>
+                <strong>Droits</strong>
+                <p>Vérifiez l'ancienneté et le solde de congés.</p>
             </div>
         </div>
         <div class="guide-item">
             <div class="guide-icon"><i class="fas fa-balance-scale"></i></div>
             <div class="guide-text">
-                <strong>Solde de congés</strong>
-                <p>L'employé dispose-t-il encore de jours de congé ce mois-ci/année ?</p>
+                <strong>Solde</strong>
+                <p>L'employé a-t-il encore assez de jours ?</p>
             </div>
         </div>
         <div class="guide-item">
             <div class="guide-icon"><i class="fas fa-file-alt"></i></div>
             <div class="guide-text">
-                <strong>Motif valable</strong>
-                <p>Un congé doit avoir un motif légitime (maladie, maternité, repos, etc.).</p>
+                <strong>Motif</strong>
+                <p>Le motif est-il légitime ?</p>
             </div>
         </div>
     </div>

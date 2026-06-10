@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -35,33 +36,65 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function index()
-    {
-        $user = Auth::user();
-        $employee = $this->getEmployee();
-
-        return view('employee.profile', compact('user', 'employee'));
+    private function getAnciennete(Employee $employee): ?array
+{
+    if (!$employee->hire_date) {
+        return null;
     }
 
-    // public function updateAvatar(Request $request)
+    $hireDate = Carbon::parse($employee->hire_date)->startOfDay();
+    $now      = now()->startOfDay();
+
+    // Années entières
+    $years = $hireDate->diffInYears($now);
+
+    // On retire les années pleines
+    $afterYears = $hireDate->copy()->addYears($years);
+
+    // Mois entiers restants (en évitant les débordements de jour)
+    $months = 0;
+    while ($afterYears->copy()->addMonth()->lte($now)) {
+        $afterYears->addMonth();
+        $months++;
+    }
+
+    // Jours restants après le dernier mois
+    $days = $afterYears->diffInDays($now);
+
+    return [
+        'years'  => $years,
+        'months' => $months,
+        'days'   => $days,
+    ];
+}
+
+    // private function getAnciennete(Employee $employee): ?array
     // {
-    //     $request->validate([
-    //         'avatar' => 'required|image|mimes:jpg,jpeg,png|max:2048',
-    //     ]);
-
-    //     $user = Auth::user();
-
-    //     // Supprimer l'ancien avatar s'il existe
-    //     if ($user->avatar && \Storage::exists($user->avatar)) {
-    //         \Storage::delete($user->avatar);
+    //     if (!$employee->hire_date) {
+    //         return null;
     //     }
 
-    //     // Enregistrer le nouveau fichier
-    //     $path = $request->file('avatar')->store('avatars/' . $user->company_id, 'public');
+    //     $hireDate = Carbon::parse($employee->hire_date);
+    //     $now      = now();
 
-    //     // Mettre à jour l'utilisateur
-    //     $user->update(['avatar' => $path]);
+    //     $years  = $hireDate->diffInYears($now);
+    //     $months = $hireDate->copy()->addYears($years)->diffInMonths($now);
+    //     $days   = $hireDate->copy()->addYears($years)->addMonths($months)->diffInDays($now);
 
-    //     return back()->with('success', 'Photo de profil mise à jour.');
+    //     return [
+    //         'years'      => $years,
+    //         'months'     => $months,
+    //         'days'       => $days,
+    //         'hire_date'  => $hireDate->format('d/m/Y'),
+    //     ];
     // }
+
+    public function index()
+    {
+        $user       = Auth::user();
+        $employee   = $this->getEmployee();
+        $anciennete = $this->getAnciennete($employee);
+
+        return view('employee.profile', compact('user', 'employee', 'anciennete'));
+    }
 }
