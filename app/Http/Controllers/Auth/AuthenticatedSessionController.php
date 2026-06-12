@@ -57,14 +57,22 @@ class AuthenticatedSessionController extends Controller
             'email' => 'Votre compte a été désactivé.',
         ]);
     }
-
-        if ($user->hasRole('super-admin') || $user->hasRole('admin')) {
+        if ($user->hasRole('super-admin')) {
+            return redirect()->route('super-admin.dashboard');
+        } elseif ($user->hasRole('admin')) {
             return redirect()->route('admin.dashboard');
         } elseif ($user->hasRole('manager')) {
             return redirect()->route('manager.dashboard');
         } else {
             return redirect()->route('employee.dashboard');
         }
+        // if ($user->hasRole('super-admin') || $user->hasRole('admin')) {
+        //     return redirect()->route('admin.dashboard');
+        // } elseif ($user->hasRole('manager')) {
+        //     return redirect()->route('manager.dashboard');
+        // } else {
+        //     return redirect()->route('employee.dashboard');
+        // }
     }
 
     /**

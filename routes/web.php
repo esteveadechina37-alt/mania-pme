@@ -8,6 +8,8 @@ use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Manager\WeeklyProgramController;
 use App\Http\Controllers\Employee\EmployeeObjectiveController;
+use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboard;
+
 
 // ===== PAGES PUBLIQUES =====
 Route::get('/', function () { return view('welcome'); });
@@ -187,3 +189,14 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware('auth')->group(function () {
     Route::put('/credentials/update', [App\Http\Controllers\Auth\CredentialsController::class, 'update'])->name('credentials.update');
 });
+
+// ===== SUPER-ADMIN =====
+Route::middleware(['auth', 'role:super-admin'])
+    ->prefix('super-admin')
+    ->name('super-admin.')
+    ->group(function () {
+        Route::get('/dashboard', [SuperAdminDashboard::class, 'index'])->name('dashboard');
+        Route::get('/companies/search', [SuperAdminDashboard::class, 'searchCompanies'])->name('companies.search');
+        Route::get('/companies/{company}', [SuperAdminDashboard::class, 'showCompany'])->name('companies.show');
+        // Autres routes de gestion des entreprises à venir…
+    });

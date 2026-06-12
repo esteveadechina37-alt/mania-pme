@@ -169,11 +169,13 @@
             position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
             color: var(--gray-300); font-size: 13px; pointer-events: none;
         }
-        #employeeSearchResults {
+        #companySearchResults, #employeeSearchResults {
             display: none; position: absolute; top: 44px; left: 0; width: 300px;
             background: white; border-radius: 14px; box-shadow: var(--shadow-lg);
             border: 1px solid var(--gray-200); z-index: 1002; max-height: 280px; overflow-y: auto;
         }
+
+        
 
         /* Bouton icône */
         .topbar-icon-btn {
@@ -356,6 +358,16 @@
     </div>
 
     <nav class="sidebar-nav">
+        @role('super-admin')
+        <div class="nav-section">
+            <div class="nav-title">Super Administration</div>
+            <a href="{{ route('super-admin.dashboard') }}" class="{{ request()->routeIs('super-admin.dashboard') ? 'active' : '' }}">
+                <i class="fas fa-th-large"></i> Tableau de bord
+            </a>
+            {{-- Ajoutez ici plus tard les liens vers la gestion des entreprises --}}
+        </div>
+        @endrole
+
         @role('admin')
         <div class="nav-section">
             <div class="nav-title">Principal</div>
@@ -518,13 +530,29 @@
     <div class="topbar-right">
 
         {{-- Recherche (admin seulement) --}}
-        @role('admin|super-admin')
+        {{-- Recherche adaptée au rôle --}}
+        @role('super-admin')
+            <div class="topbar-search">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="companySearchInput" placeholder="Rechercher une entreprise…" autocomplete="off">
+                <div id="companySearchResults"></div>
+            </div>
+        @endrole
+
+        @role('admin')
+            <div class="topbar-search">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="employeeSearchInput" placeholder="Rechercher un employé…" autocomplete="off">
+                <div id="employeeSearchResults"></div>
+            </div>
+        @endrole
+        <!-- @role('admin|super-admin')
         <div class="topbar-search">
             <i class="fas fa-search search-icon"></i>
             <input type="text" id="employeeSearchInput" placeholder="Rechercher un employé..." autocomplete="off">
             <div id="employeeSearchResults"></div>
         </div>
-        @endrole
+        @endrole -->
 
         {{-- Notifications --}}
         @php
@@ -702,6 +730,41 @@
         if (confirm) confirm.addEventListener('click', function() { document.getElementById('deleteForm').submit(); });
         if (modal)   modal.addEventListener('click',   function(e) { if (e.target === this) this.style.display = 'none'; });
     });
+
+
+    // Recherche d'entreprises (super-admin)
+(function() {
+    var input = document.getElementById('companySearchInput');
+    if (!input) return;
+    var resultsDiv = document.getElementById('companySearchResults');
+    var timer;
+    input.addEventListener('input', function() {
+        clearTimeout(timer);
+        var q = this.value.trim();
+        if (q.length < 2) { resultsDiv.style.display = 'none'; return; }
+        timer = setTimeout(function() {
+            fetch('/super-admin/companies/search?query=' + encodeURIComponent(q))
+                .then(function(r) { return r.json(); })
+                .then(function(companies) {
+                    if (companies.length === 0) {
+                        resultsDiv.innerHTML = '<div style="padding:14px;color:var(--gray-600);font-size:13px;">Aucune entreprise trouvée.</div>';
+                    } else {
+                        resultsDiv.innerHTML = companies.map(function(comp) {
+                            return '<a href="/super-admin/companies/' + comp.id + '" style="display:flex;align-items:center;gap:12px;padding:10px 14px;text-decoration:none;color:var(--dark);border-bottom:1px solid var(--gray-100);">'
+                                + '<div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#FF6200,#FF8C42);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">' + comp.name.charAt(0).toUpperCase() + '</div>'
+                                + '<div><div style="font-weight:600;font-size:13px;">' + comp.name + '</div></div></a>';
+                        }).join('');
+                    }
+                    resultsDiv.style.display = 'block';
+                });
+        }, 300);
+    });
+    document.addEventListener('click', function(e) {
+        if (input && !input.contains(e.target) && resultsDiv && !resultsDiv.contains(e.target)) {
+            resultsDiv.style.display = 'none';
+        }
+    });
+})();
 </script>
 
 @include('components.change-password-modal')

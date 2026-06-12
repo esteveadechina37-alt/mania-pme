@@ -43,4 +43,14 @@ class Company extends Model
     {
         return $this->hasOne(User::class)->where('is_admin', true);
     }
+
+        public function employees()
+    {
+        return $this->hasMany(Employee::class);
+    }
+
+        public function departments()
+    {
+        return $this->hasMany(Department::class);
+    }
 }

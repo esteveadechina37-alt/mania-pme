@@ -20,6 +20,8 @@ class User extends Authenticatable
         'phone',
         'avatar',
         'is_active',
+        'must_change_password',   // ← Ajout
+
     ];
 
     protected $hidden = [
@@ -34,6 +36,7 @@ class User extends Authenticatable
             'password'          => 'hashed',
             'is_admin'          => 'boolean',
             'is_active'         => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 

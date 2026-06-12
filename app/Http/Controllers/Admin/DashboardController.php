@@ -15,6 +15,13 @@ class DashboardController extends Controller
 {
     public function index()
     {
+          $user = auth()->user();
+
+            // Si l'utilisateur est super-admin sans entreprise, on le redirige vers le dashboard super-admin
+            if ($user->hasRole('super-admin') && !$user->company) {
+                return redirect()->route('super-admin.dashboard');
+            }
+
         $company = auth()->user()->company;
         $today = now()->toDateString();
 

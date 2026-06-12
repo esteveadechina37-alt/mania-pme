@@ -51,6 +51,19 @@ class RegisteredUserController extends Controller
             'address'   => $request->company_address,
         ]);
 
+        // --- AJOUT ICI ---
+$superAdmins = \App\Models\User::role('super-admin')->get();
+foreach ($superAdmins as $superAdmin) {
+    \App\Models\Notification::create([
+        'user_id'    => $superAdmin->id,
+        'company_id' => null, // Pas lié à une entreprise spécifique
+        'type'       => 'new_company',
+        'title'      => 'Nouvelle entreprise inscrite',
+        'message'    => "L'entreprise {$company->name} vient d'être créée.",
+    ]);
+}
+// --- FIN AJOUT ---
+
         // 2. Créer l'administrateur lié à cette entreprise
         $user = User::create([
             'name'          => $request->name,
