@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\Employee;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,6 +30,24 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = auth()->user();
+
+          // ⭐ Réactiver l'employé si sa date d'embauche est passée
+        $employee = Employee::where('user_id', $user->id)->first();
+        if ($employee && $employee->status === 'inactive' && $employee->hire_date) {
+            $hireDate = \Carbon\Carbon::parse($employee->hire_date)->startOfDay();
+            if (now()->startOfDay()->gte($hireDate)) {
+                $employee->update(['status' => 'active']);
+                $user->update(['is_active' => true]);
+                // Recharger l'utilisateur pour refléter le changement
+                $user->refresh();
+            }
+        }
+
+         // ⭐ Signaler si le changement de mot de passe est obligatoire
+            if ($user->must_change_password) {
+                session()->flash('show_password_modal', true);
+            }
+
 
          if (!$user->is_active) {
         auth()->logout();

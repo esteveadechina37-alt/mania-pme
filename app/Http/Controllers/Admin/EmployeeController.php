@@ -196,8 +196,17 @@ class EmployeeController extends Controller
             'position' => 'nullable|string|max:255',
             'contract_type' => 'nullable|string',
             'salary' => 'nullable|numeric',
-            'hire_date' => 'nullable|date',
-            'contract_end_date' => 'nullable|date',
+            'hire_date' => 'required|date',
+            // 'contract_end_date' => 'nullable|date',
+                'contract_end_date' => [
+            'nullable',
+            'date',
+            function ($attribute, $value, $fail) use ($request) {
+                if ($value && $request->hire_date && $value <= $request->hire_date) {
+                    $fail('La date de fin du contrat doit être postérieure à la date d\'embauche.');
+                }
+            },
+        ],
             'role' => 'required|in:manager,employe,stagiaire',
         ]);
 
@@ -208,6 +217,7 @@ class EmployeeController extends Controller
         $user->email = $request->email;
         $user->password = Hash::make($request->password);
         $user->is_active = true;
+        $user->must_change_password = true;
         $user->save();
         $user->assignRole($request->role);
 
@@ -222,6 +232,15 @@ class EmployeeController extends Controller
         $employee->hire_date = $request->hire_date;
         $employee->contract_end_date = $request->contract_end_date;
         $employee->save();
+
+        // Synchronisation du statut en fonction de la date d'embauche
+if ($employee->hire_date && now()->startOfDay()->lt(\Carbon\Carbon::parse($employee->hire_date)->startOfDay())) {
+    $employee->update(['status' => 'inactive']);
+    $user->update(['is_active' => false]);
+} else {
+    $employee->update(['status' => 'active']);
+    $user->update(['is_active' => true]);
+}
 
         return redirect()->route('admin.employees.index')
                ->with('success', 'Employé créé avec succès.');
@@ -268,8 +287,17 @@ class EmployeeController extends Controller
             'position' => 'nullable|string',
             'contract_type' => 'nullable|string',
             'salary' => 'nullable|numeric',
-            'hire_date' => 'nullable|date',
-            'contract_end_date' => 'nullable|date',
+            // 'hire_date' => 'required|date',
+            'contract_end_date' => [
+        'nullable',
+        'date',
+        function ($attribute, $value, $fail) use ($request) {
+            if ($value && $request->hire_date && $value <= $request->hire_date) {
+                $fail('La date de fin du contrat doit être postérieure à la date d\'embauche.');
+            }
+        },
+    ],
+            // 'contract_end_date' => 'nullable|date',
             'status' => 'required|in:active,suspended,terminated',
             'role' => 'required|in:manager,employe,stagiaire',
         ]);
@@ -288,7 +316,7 @@ class EmployeeController extends Controller
             'position' => $request->position,
             'contract_type' => $request->contract_type,
             'salary' => $request->salary,
-            'hire_date' => $request->hire_date,
+            // 'hire_date' => $request->hire_date,
             'contract_end_date' => $request->contract_end_date,
             'status' => $request->status
         ]);
@@ -306,6 +334,8 @@ class EmployeeController extends Controller
         } else {
             $employee->user->update(['is_active' => false]);
         }
+
+        
 
         return redirect()->route('admin.employees.index')
                ->with('success', 'Employé mis à jour.');
@@ -385,4 +415,183 @@ class EmployeeController extends Controller
 
         return response()->json($employees);
     }
+
+
+    public function showImportForm()
+{
+    return view('admin.employees.import');
+}
+public function import(Request $request)
+{
+    $request->validate([
+        'csv_file' => 'required|file|mimes:csv,txt',
+    ]);
+
+    $file = $request->file('csv_file');
+    $path = $file->getRealPath();
+    $data = array_map('str_getcsv', file($path));
+    $header = array_shift($data);
+
+    // Mapping des colonnes (français / anglais) → clé utilisée en interne
+    $mapping = [
+        'nom'               => 'name',
+        'name'              => 'name',
+        'email'             => 'email',
+        'courriel'          => 'email',
+        'mot de passe'      => 'password',
+        'mot_de_passe'      => 'password',
+        'password'          => 'password',
+        'rôle'              => 'role',
+        'role'              => 'role',
+        'date d\'embauche'   => 'hire_date',
+        'date_embauche'     => 'hire_date',
+        'hire_date'         => 'hire_date',
+        'date de fin'       => 'contract_end_date',
+        'date_fin'          => 'contract_end_date',
+        'contract_end_date' => 'contract_end_date',
+        'salaire'           => 'salary',
+        'salary'            => 'salary',
+    ];
+
+    // Nettoyer les en-têtes et les faire correspondre
+    $normalizedHeader = [];
+    foreach ($header as $col) {
+        $col = trim(strtolower($col));
+        if (isset($mapping[$col])) {
+            $normalizedHeader[] = $mapping[$col];
+        } else {
+            $normalizedHeader[] = null; // colonne inconnue → ignorée
+        }
+    }
+
+    $imported = 0;
+    $errors   = [];
+
+    foreach ($data as $index => $row) {
+        if (count($row) !== count($header)) {
+            $errors[] = "Ligne " . ($index + 2) . " ignorée : nombre de colonnes incorrect.";
+            continue;
+        }
+
+        // Construire le tableau associatif avec les clés mappées
+        $rowAssoc = [];
+        foreach ($normalizedHeader as $i => $key) {
+            if ($key !== null) {
+                $rowAssoc[$key] = $row[$i] ?? '';
+            }
+        }
+
+        // Champs obligatoires
+        $name  = trim($rowAssoc['name'] ?? '');
+        $email = trim($rowAssoc['email'] ?? '');
+        if (empty($name) || empty($email)) {
+            $errors[] = "Ligne " . ($index + 2) . " ignorée : nom ou email manquant.";
+            continue;
+        }
+
+        // Vérifier doublon email
+        if (\App\Models\User::where('email', $email)->exists()) {
+            $errors[] = "Ligne " . ($index + 2) . " ($email) ignorée : email déjà utilisé.";
+            continue;
+        }
+
+        // Valeurs par défaut
+        $password        = ($rowAssoc['password'] ?? '') !== '' ? $rowAssoc['password'] : 'Default123!';
+        $roleName        = ($rowAssoc['role'] ?? '') !== '' ? $rowAssoc['role'] : 'employe';
+        $hireDate        = ($rowAssoc['hire_date'] ?? '') !== '' ? $rowAssoc['hire_date'] : now()->toDateString();
+        $contractEndDate = ($rowAssoc['contract_end_date'] ?? '') !== '' ? $rowAssoc['contract_end_date'] : null;
+        $salary          = ($rowAssoc['salary'] ?? '') !== '' ? floatval($rowAssoc['salary']) : 0;
+
+        // Créer l'utilisateur
+        $user = \App\Models\User::create([
+            'name'                 => $name,
+            'email'                => $email,
+            'password'             => bcrypt($password),
+            'company_id'           => auth()->user()->company_id,
+            'is_active'            => true,
+            'must_change_password' => true,
+        ]);
+
+        $user->assignRole($roleName);
+
+        // Déterminer le statut
+        $hireDateCarbon = \Carbon\Carbon::parse($hireDate)->startOfDay();
+        $status = now()->startOfDay()->lt($hireDateCarbon) ? 'inactive' : 'active';
+
+        if ($status === 'inactive') {
+            $user->update(['is_active' => false]);
+        }
+
+        // Créer l'employé
+        \App\Models\Employee::create([
+            'user_id'           => $user->id,
+            'company_id'        => auth()->user()->company_id,
+            'department_id'     => null, // pas de département dans l'import
+            'position'          => null, // pas de poste dans l'import
+            'hire_date'         => $hireDate,
+            'contract_end_date' => $contractEndDate,
+            'salary'            => $salary,
+            'status'            => $status,
+        ]);
+
+        $imported++;
+    }
+
+    $message = "$imported employé(s) importé(s) avec succès.";
+    if (count($errors) > 0) {
+        $message .= ' Cependant, ' . count($errors) . ' ligne(s) ont été ignorées.';
+        session()->flash('import_errors', $errors);
+    }
+
+    return redirect()->route('admin.employees.index')
+        ->with('success', $message);
+}
+    // public function import(Request $request)
+    // {
+    //     $request->validate([
+    //         'csv_file' => 'required|file|mimes:csv,txt',
+    //     ]);
+
+    //     $file = $request->file('csv_file');
+    //     $path = $file->getRealPath();
+    //     $data = array_map('str_getcsv', file($path));
+    //     $header = array_shift($data); // première ligne = en-têtes
+
+    //     $imported = 0;
+    //     foreach ($data as $row) {
+    //         if (count($row) !== count($header)) continue;
+    //         $rowAssoc = array_combine($header, $row);
+
+    //         // Créer l'utilisateur
+    //         $user = \App\Models\User::create([
+    //             'name'       => $rowAssoc['name'] ?? 'Sans nom',
+    //             'email'      => $rowAssoc['email'],
+    //             'password'   => bcrypt($rowAssoc['password'] ?? 'default123'),
+    //             'company_id' => auth()->user()->company_id,
+    //             'is_active'  => true,
+    //             'must_change_password' => true, // obligera à changer à la 1ère connexion
+    //         ]);
+
+    //         // Assigner le rôle (par défaut 'employe')
+    //         $roleName = $rowAssoc['role'] ?? 'employe';
+    //         $user->assignRole($roleName);
+
+    //         // Créer l'employé
+    //         \App\Models\Employee::create([
+    //             'user_id'           => $user->id,
+    //             'company_id'        => auth()->user()->company_id,
+    //             'department_id'     => $rowAssoc['department_id'] ?? null,
+    //             'position'          => $rowAssoc['position'] ?? null,
+    //             'hire_date'         => $rowAssoc['hire_date'] ?? now(),
+    //             'contract_end_date' => $rowAssoc['contract_end_date'] ?? null,
+    //             'salary'            => $rowAssoc['salary'] ?? 0,
+    //             'status'            => 'active',
+    //         ]);
+
+    //         $imported++;
+    //     }
+
+    //     return redirect()->route('admin.employees.index')
+    //         ->with('success', "$imported employé(s) importé(s).");
+    // }
 }

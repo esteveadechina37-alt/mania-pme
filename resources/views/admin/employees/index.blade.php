@@ -264,10 +264,23 @@
         <h1 class="page-title"><i class="fas fa-user-friends" style="color:var(--primary);"></i> Gestion des <span>Employés</span></h1>
         <p class="page-subtitle">Pilotez votre effectif et suivez les statuts</p>
     </div>
-    <a href="{{ route('admin.employees.create') }}" class="btn-primary">
+   <div class="header-actions">
+     <a href="{{ route('admin.employees.create') }}" class="btn-primary">
         <i class="fas fa-plus-circle"></i> Nouvel employé
     </a>
+    <a href="{{ route('admin.employees.import') }}" class="btn-primary">
+        <i class="fas fa-upload"></i> Importer CSV
+    </a>
+   </div>
 </div>
+
+@if(session('import_errors'))
+    <div class="alert alert-warning">
+        @foreach(session('import_errors') as $err)
+            <p>{{ $err }}</p>
+        @endforeach
+    </div>
+@endif
 
 @if(session('success'))
     <div class="alert-success animate-in delay-1">

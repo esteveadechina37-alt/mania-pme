@@ -413,7 +413,7 @@
                     <div style="grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div>
                             <label class="form-label"><i class="fas fa-calendar-alt" style="color:var(--primary);"></i> Date d'embauche</label>
-                            <input type="date" name="hire_date" class="form-input" value="{{ old('hire_date', $employee->hire_date) }}">
+                            <input type="date" name="hire_date" class="form-input" value="{{ old('hire_date', $employee->hire_date) }}" disabled>
                         </div>
                         <div>
                             <label class="form-label"><i class="fas fa-calendar-times" style="color:var(--primary);"></i> Fin de contrat</label>

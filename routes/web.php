@@ -37,6 +37,9 @@ Route::middleware(['auth', 'role:admin,super-admin'])
         // ✅ Contrats dans le bon groupe nommé
         Route::get('/contracts', [\App\Http\Controllers\Admin\ContractController::class, 'index'])
             ->name('contracts.index');
+
+        Route::get('/employees/import', [App\Http\Controllers\Admin\EmployeeController::class, 'showImportForm'])->name('employees.import');
+        Route::post('/employees/import', [App\Http\Controllers\Admin\EmployeeController::class, 'import'])->name('employees.import.process');
     });
 
 // ===== ADMIN (ressources) =====
@@ -179,4 +182,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('user.settings.edit');
     Route::put('/account/settings', [\App\Http\Controllers\UserSettingsController::class, 'update'])
         ->name('user.settings.update');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::put('/credentials/update', [App\Http\Controllers\Auth\CredentialsController::class, 'update'])->name('credentials.update');
 });

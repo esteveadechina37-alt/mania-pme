@@ -704,5 +704,6 @@
     });
 </script>
 
+@include('components.change-password-modal')
 </body>
 </html>

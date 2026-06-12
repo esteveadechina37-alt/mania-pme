@@ -146,6 +146,13 @@
         color: var(--dark);
         font-family: 'Cabinet Grotesk', sans-serif;
     }
+    .form-select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L0 2h12z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+        background-size: 12px;
+    }
     .form-input:focus, .form-select:focus {
         border-color: var(--primary);
         box-shadow: 0 0 0 3px var(--primary-light);
@@ -307,11 +314,42 @@
 
             <div style="margin-bottom: 20px;">
                 <label class="form-label" for="name">
-                    <i class="fas fa-tag" style="color:var(--primary); margin-right:6px;"></i> Nom du congé *
+                    <i class="fas fa-tag" style="color:var(--primary); margin-right:6px;"></i> Motif d'absence *
                 </label>
-                <input type="text" name="name" id="name" class="form-input @error('name') is-invalid @enderror"
-                       value="{{ old('name') }}" required>
+                <select name="name" id="name" class="form-select @error('name') is-invalid @enderror" required>
+                    <option value="">-- Choisissez un motif --</option>
+                    @php
+                        $motifs = [
+                            'Congé payé',
+                            'Congé sans solde',
+                            'Maladie',
+                            'Maternité',
+                            'Paternité',
+                            'Congé de mariage',
+                            'Congé de deuil',
+                            'Récupération',
+                            'Formation',
+                            'Congé exceptionnel',
+                        ];
+                    @endphp
+                    @foreach($motifs as $motif)
+                        <option value="{{ $motif }}" {{ old('name') == $motif ? 'selected' : '' }}>{{ $motif }}</option>
+                    @endforeach
+                    <option value="__autre__" {{ old('name') == '__autre__' ? 'selected' : '' }}>Autre (saisir manuellement)</option>
+                </select>
                 @error('name')
+                    <span class="error-text">{{ $message }}</span>
+                @enderror
+            </div>
+
+            {{-- Champ texte affiché uniquement si "Autre" est sélectionné --}}
+            <div id="custom-name-container" style="margin-bottom: 20px; display: none;">
+                <label class="form-label" for="custom_name">
+                    <i class="fas fa-pen" style="color:var(--primary); margin-right:6px;"></i> Précisez le motif
+                </label>
+                <input type="text" name="custom_name" id="custom_name" class="form-input @error('custom_name') is-invalid @enderror"
+                       value="{{ old('custom_name') }}" placeholder="Saisissez le motif personnalisé">
+                @error('custom_name')
                     <span class="error-text">{{ $message }}</span>
                 @enderror
             </div>
@@ -353,8 +391,8 @@
         <div class="guide-item">
             <div class="guide-icon"><i class="fas fa-tag"></i></div>
             <div class="guide-text">
-                <strong>Nom du congé</strong>
-                <p>Donnez un nom explicite (ex : Congé payé, Maladie, Maternité) qui apparaîtra dans les demandes.</p>
+                <strong>Motif d'absence</strong>
+                <p>Choisissez un motif courant dans la liste ou sélectionnez "Autre" pour saisir un motif personnalisé.</p>
             </div>
         </div>
 
@@ -375,4 +413,26 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const select = document.getElementById('name');
+        const customContainer = document.getElementById('custom-name-container');
+        const customInput = document.getElementById('custom_name');
+
+        function toggleCustom() {
+            if (select.value === '__autre__') {
+                customContainer.style.display = 'block';
+                customInput.setAttribute('required', 'required');
+            } else {
+                customContainer.style.display = 'none';
+                customInput.removeAttribute('required');
+                customInput.value = '';
+            }
+        }
+
+        select.addEventListener('change', toggleCustom);
+        toggleCustom(); // au chargement si "Autre" était déjà sélectionné
+    });
+</script>
 @endsection
