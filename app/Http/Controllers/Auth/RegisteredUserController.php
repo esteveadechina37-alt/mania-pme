@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use App\Models\Plan;
 
 class RegisteredUserController extends Controller
 {
@@ -51,18 +52,29 @@ class RegisteredUserController extends Controller
             'address'   => $request->company_address,
         ]);
 
+        // 2. Assigner le plan gratuit à l'entreprise
+        $freePlan = Plan::where('slug', 'gratuit')->first();
+        if ($freePlan) {
+            \App\Models\Subscription::create([
+                'company_id' => $company->id,
+                'plan_id'    => $freePlan->id,
+                'status'     => 'active',
+                'starts_at'  => now(),
+            ]);
+        }
+
         // --- AJOUT ICI ---
-$superAdmins = \App\Models\User::role('super-admin')->get();
-foreach ($superAdmins as $superAdmin) {
-    \App\Models\Notification::create([
-        'user_id'    => $superAdmin->id,
-        'company_id' => null, // Pas lié à une entreprise spécifique
-        'type'       => 'new_company',
-        'title'      => 'Nouvelle entreprise inscrite',
-        'message'    => "L'entreprise {$company->name} vient d'être créée.",
-    ]);
-}
-// --- FIN AJOUT ---
+        $superAdmins = \App\Models\User::role('super-admin')->get();
+        foreach ($superAdmins as $superAdmin) {
+            \App\Models\Notification::create([
+                'user_id'    => $superAdmin->id,
+                'company_id' => null, // Pas lié à une entreprise spécifique
+                'type'       => 'new_company',
+                'title'      => 'Nouvelle entreprise inscrite',
+                'message'    => "L'entreprise {$company->name} vient d'être créée.",
+            ]);
+        }
+        // --- FIN AJOUT ---
 
         // 2. Créer l'administrateur lié à cette entreprise
         $user = User::create([

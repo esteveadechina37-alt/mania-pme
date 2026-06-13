@@ -53,4 +53,9 @@ class Company extends Model
     {
         return $this->hasMany(Department::class);
     }
+
+        public function subscription()
+    {
+        return $this->hasOne(Subscription::class)->latestOfMany();
+    }
 }

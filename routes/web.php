@@ -9,6 +9,8 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Manager\WeeklyProgramController;
 use App\Http\Controllers\Employee\EmployeeObjectiveController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboard;
+use App\Http\Controllers\SuperAdmin\SubscriptionController;
+
 
 
 // ===== PAGES PUBLIQUES =====
@@ -42,6 +44,11 @@ Route::middleware(['auth', 'role:admin,super-admin'])
 
         Route::get('/employees/import', [App\Http\Controllers\Admin\EmployeeController::class, 'showImportForm'])->name('employees.import');
         Route::post('/employees/import', [App\Http\Controllers\Admin\EmployeeController::class, 'import'])->name('employees.import.process');
+
+                Route::get('/subscription', [App\Http\Controllers\Admin\CompanySubscriptionController::class, 'index'])
+            ->name('company.subscription');
+        Route::post('/subscription', [App\Http\Controllers\Admin\CompanySubscriptionController::class, 'subscribe'])
+            ->name('company.subscription.subscribe');
     });
 
 // ===== ADMIN (ressources) =====
@@ -199,4 +206,13 @@ Route::middleware(['auth', 'role:super-admin'])
         Route::get('/companies/search', [SuperAdminDashboard::class, 'searchCompanies'])->name('companies.search');
         Route::get('/companies/{company}', [SuperAdminDashboard::class, 'showCompany'])->name('companies.show');
         // Autres routes de gestion des entreprises à venir…
+
+        // ... routes existantes (dashboard, companies.search, companies.show)
+        Route::get('/plans', [SubscriptionController::class, 'plans'])->name('plans.index');
+        Route::get('/plans/create', [SubscriptionController::class, 'createPlan'])->name('plans.create');
+        Route::post('/plans', [SubscriptionController::class, 'storePlan'])->name('plans.store');
+        Route::get('/plans/{plan}/edit', [SubscriptionController::class, 'editPlan'])->name('plans.edit');
+        Route::put('/plans/{plan}', [SubscriptionController::class, 'updatePlan'])->name('plans.update');
+        Route::get('/subscriptions', [SubscriptionController::class, 'subscriptions'])->name('subscriptions.index');
+        Route::post('/subscriptions/{subscription}/cancel', [SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
     });

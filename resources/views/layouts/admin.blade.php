@@ -364,9 +364,23 @@
             <a href="{{ route('super-admin.dashboard') }}" class="{{ request()->routeIs('super-admin.dashboard') ? 'active' : '' }}">
                 <i class="fas fa-th-large"></i> Tableau de bord
             </a>
-            {{-- Ajoutez ici plus tard les liens vers la gestion des entreprises --}}
+            <a href="{{ route('super-admin.plans.index') }}" class="{{ request()->routeIs('super-admin.plans.*') ? 'active' : '' }}">
+                <i class="fas fa-layer-group"></i> Plans d'abonnement
+            </a>
+            <a href="{{ route('super-admin.subscriptions.index') }}" class="{{ request()->routeIs('super-admin.subscriptions.*') ? 'active' : '' }}">
+                <i class="fas fa-file-invoice"></i> Abonnements
+            </a>
         </div>
         @endrole
+        <!-- @role('super-admin')
+        <div class="nav-section">
+            <div class="nav-title">Super Administration</div>
+            <a href="{{ route('super-admin.dashboard') }}" class="{{ request()->routeIs('super-admin.dashboard') ? 'active' : '' }}">
+                <i class="fas fa-th-large"></i> Tableau de bord
+            </a>
+            
+        </div>
+        @endrole -->
 
         @role('admin')
         <div class="nav-section">
@@ -401,6 +415,12 @@
             <a href="{{ route('admin.contracts.index') }}" class="{{ request()->routeIs('admin.contracts.*') ? 'active' : '' }}">
                 <i class="fas fa-file-contract"></i> Contrats
             </a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-title">Les Abonnements</div>
+            <a href="{{ route('admin.company.subscription') }}" class="{{ request()->routeIs('admin.company.subscription') ? 'active' : '' }}">
+            <i class="fas fa-crown"></i> Abonnement
+        </a>
         </div>
         @endrole
 
